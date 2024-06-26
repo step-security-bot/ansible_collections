@@ -1,0 +1,91 @@
+---
+- name: Create
+  hosts: localhost
+  gather_facts: false
+  vars:
+    molecule_inventory:
+      all:
+        hosts: {}
+        molecule: {}
+  tasks:
+    - name: List Orb VMs
+      ansible.builtin.command: orbctl list -f json
+      changed_when: false
+      register: orb_list
+
+    - name: Verify VM list
+      vars:
+        _image: "{{ platform['image'] | split(':') }}"
+        _running: "{{ orb_list.stdout | from_json | selectattr('state', 'equalto', 'running') }}"
+        _match: |-
+          {{
+            _running |
+            selectattr('name', 'equalto', platform['name']) |
+            selectattr('image.distro', 'equalto', _image | first) |
+            selectattr('image.version', 'equalto', _image | last) |
+            first
+          }}
+        _vm:
+          exists: "{{ _match is defined }}"
+          name: "{{ _match['name'] | default(platform['name']) }}"
+          user: "{{ _match['config']['default_username'] | default('ansible') }}"
+          image: "{{ platform['image'] }}"
+      ansible.builtin.set_fact:
+        orbstack_vms: "{{ (orbstack_vms | default([])) + [_vm] }}"
+      loop: "{{ molecule_yml['platforms'] }}"
+      loop_control:
+        loop_var: platform
+
+    - name: Create Orb VM
+      when: not _vm['exists']
+      ansible.builtin.command: orbctl create {{ _vm['image'] }} --user {{ _vm['user'] }} --user-data ../cloud-init.yml {{ _vm['name'] }}
+      changed_when: false
+      loop: "{{ orbstack_vms }}"
+      loop_control:
+        loop_var: _vm
+
+    - name: Add VM to molecule_inventory
+      vars:
+        inventory_partial_yaml: |
+          all:
+            children:
+              molecule:
+                hosts:
+                  {{ _vm['name'] }}@orb:
+                    ansible_user: {{ _vm['user'] }}
+      ansible.builtin.set_fact:
+        molecule_inventory: >
+          {{ molecule_inventory | combine(inventory_partial_yaml | from_yaml, recursive=true) }}
+      loop: "{{ orbstack_vms }}"
+      loop_control:
+        loop_var: _vm
+
+    - name: Dump molecule_inventory
+      ansible.builtin.copy:
+        content: |
+          {{ molecule_inventory | to_yaml }}
+        dest: "{{ molecule_ephemeral_directory }}/inventory/molecule_inventory.yml"
+        mode: "0600"
+
+    - name: Force inventory refresh
+      ansible.builtin.meta: refresh_inventory
+
+    - name: Fail if molecule group is missing
+      ansible.builtin.assert:
+        that: "'molecule' in groups"
+        fail_msg: |
+          molecule group was not found inside inventory groups: {{ groups }}
+      run_once: true # noqa: run-once[task]
+
+- name: Validate that inventory was refreshed
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check uname
+      ansible.builtin.raw: uname -a
+      register: result
+      changed_when: false
+
+    - name: Display uname info
+      ansible.builtin.debug:
+        msg: "{{ result.stdout }}"

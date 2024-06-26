@@ -1,0 +1,66 @@
+---
+ipfs_home: /home/ipfs
+ipfs_version: v0.29.0
+ipfs_download_url:
+  "https://dist.ipfs.tech/kubo/{{ ipfs_version }}\
+  /kubo_{{ ipfs_version }}_{{ ansible_system | lower }}-{{ system_architecture }}.tar.gz"
+
+# systemd
+ipfs_private_network: false
+ipfs_fd_max: 1000000
+ipfs_enable_gc: false
+
+## dummy identity that'll be instantly rotated after init
+ipfs_identity_peer_id: 12D3KooWCixTABwjSsxLxiz1Wm8gaVWYuUpfZvGZoNUXGjtoP5sr
+ipfs_identity_private_key: CAESQDBW7drToQeuXYTw8qV9P1Rr6z70L9Opv74UCMpPiIDfKzBXAIYPx07Et3W+wPJRoUuE/3O2/G9X6IjWjM/fy0U=
+
+ipfs_datastore_storage_max: 10GB
+ipfs_datastore_storage_gc_watermark: 90
+ipfs_datastore_bloom_filter_size: 1048576 # 1MB
+ipfs_datastore_gc_period: 1h
+ipfs_datastore_shard_func: "{{ ((ipfs_datastore_storage_max | human_to_bytes) >= ('2TB' | human_to_bytes)) | ternary(3, 2) }}"
+ipfs_datastore_sync: false
+
+ipfs_addresses_api: /ip4/127.0.0.1/tcp/5001
+ipfs_addresses_announce: null
+  # -
+ipfs_addresses_gateway: /ip4/127.0.0.1/tcp/8080
+ipfs_addresses_no_announce: null
+  # -
+ipfs_addresses_swarm:
+  - /ip4/0.0.0.0/tcp/4001
+  - /ip6/::/tcp/4001
+  - /ip4/0.0.0.0/udp/4001/quic-v1
+  - /ip4/0.0.0.0/udp/4001/quic-v1/webtransport
+  - /ip6/::/udp/4001/quic-v1
+  - /ip6/::/udp/4001/quic-v1/webtransport
+
+ipfs_discovery_enabled: false
+ipfs_discovery_interval: 10
+
+ipfs_routing_accelerated_client: true
+
+ipfs_bootstrap: null
+  # -
+
+ipfs_gateway_root_redirect: null
+ipfs_gateway_public_gateways: null
+
+ipfs_api_http_headers: null
+
+ipfs_swarm_disable_bandwidth_metrics: false
+ipfs_swarm_conn_mgr_type: basic
+ipfs_swarm_conn_mgr_high_water: 200
+ipfs_swarm_conn_mgr_low_water: "{{ ((ipfs_swarm_conn_mgr_high_water | int) / 4) | int}}"
+ipfs_swarm_conn_mgr_grace_period: 30s
+ipfs_swarm_resource_mgr_max_memory: "{{ (ansible_memtotal_mb | human_to_bytes(default_unit='M') / 2) | int }}"
+
+ipfs_reprovider_strategy: all
+ipfs_reprovider_interval: 12h
+
+ipfs_experimental_strategic_providing: false
+
+ipfs_internal_bitswap_engine_blockstore_worker_count: 128
+ipfs_internal_bitswap_engine_task_worker_count: 8
+ipfs_internal_bitswap_max_bytes_per_peer: 1MB
+ipfs_internal_bitswap_task_worker_count: 8

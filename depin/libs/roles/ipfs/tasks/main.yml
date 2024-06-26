@@ -1,0 +1,83 @@
+---
+- name: Create download folder for go-ipfs
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: root
+    dest: /opt/ipfs/{{ ipfs_version }}
+
+- name: Download IPFS
+  become: true
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ ipfs_download_url }}"
+    dest: /opt/ipfs/{{ ipfs_version }}
+    extra_opts: ['--strip-components=1', '--show-stored-names']
+    creates: /opt/ipfs/{{ ipfs_version }}/ipfs
+
+- name: Symlink binary to path
+  become: true
+  ansible.builtin.file:
+    src: /opt/ipfs/{{ ipfs_version }}/ipfs
+    path: /usr/local/bin/ipfs
+    mode: '0755'
+    owner: root
+    group: root
+    state: hard
+    force: true
+  notify: restart ipfs
+
+- name: Install systemd service
+  become: true
+  ansible.builtin.template:
+    src: templates/ipfs.service.j2
+    dest: /etc/systemd/system/ipfs.service
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart ipfs
+
+- name: Make user group
+  become: true
+  ansible.builtin.group:
+    state: present
+    name: ipfs
+
+- name: Make user
+  become: true
+  ansible.builtin.user:
+    state: present
+    name: ipfs
+    group: ipfs
+    shell: /bin/bash
+    home: "{{ ipfs_home }}"
+    comment: IPFS user
+    system: true
+
+- name: Copy default config
+  become: true
+  ansible.builtin.template:
+    src: templates/config.j2
+    dest: "{{ ipfs_home }}/ipfs_default_config"
+    owner: ipfs
+    group: ipfs
+    mode: 0644
+
+- name: Setup IPFS
+  become: true
+  become_user: ipfs
+  block:
+    - name: Init IPFS
+      ansible.builtin.command: ipfs init --empty-repo -- {{ ipfs_home }}/ipfs_default_config
+      args:
+        creates: "{{ ipfs_home }}/.ipfs/config"
+      register: init_ipfs
+
+    ## hacky way to ensure new peer ID and secret is generated from generated config
+    - name: Rotate Identity
+      when: init_ipfs is changed
+      ansible.builtin.command: "{{ item }}"
+      loop:
+        - ipfs key rotate --oldkey backup
+        - ipfs key rm backup

@@ -1,0 +1,15 @@
+#cloud-config
+packages:
+  - python3
+  - python3-pip
+  - python3-jmespath
+  - pipx
+  - git
+  - acl
+  - nano
+  - curl
+  - jq
+package_upgrade: true
+package_update: true
+
+ssh_pwauth: false

@@ -1,0 +1,156 @@
+{
+  "Identity": {
+    "PeerID": "{{ ipfs_identity_peer_id }}",
+    "PrivKey": "{{ ipfs_identity_private_key }}"
+  },
+  "Datastore": {
+    "StorageMax": "{{ ipfs_datastore_storage_max }}",
+    "StorageGCWatermark": {{ ipfs_datastore_storage_gc_watermark }},
+    "BloomFilterSize": {{ ipfs_datastore_bloom_filter_size }},
+    "GCPeriod": "{{ ipfs_datastore_gc_period }}",
+    "HashOnRead": false,
+    "Spec": {
+      "mounts": [
+        {
+          "child": {
+            "path": "blocks",
+            "shardFunc": "/repo/flatfs/shard/v1/next-to-last/{{ ipfs_datastore_shard_func }}",
+            "sync": {{ ipfs_datastore_sync | to_json }},
+            "type": "flatfs"
+          },
+          "mountpoint": "/blocks",
+          "prefix": "flatfs.datastore",
+          "type": "measure"
+        },
+        {
+          "child": {
+            "compression": "none",
+            "path": "datastore",
+            "type": "levelds"
+          },
+          "mountpoint": "/",
+          "prefix": "leveldb.datastore",
+          "type": "measure"
+        }
+      ],
+      "type": "mount"
+    }
+  },
+  "Addresses": {
+    "API": "{{ ipfs_addresses_api }}",
+    "Announce": {{ ipfs_addresses_announce | to_nice_json(indent=2) | indent(4) }},
+    "Gateway": "{{ ipfs_addresses_gateway }}",
+    "NoAnnounce": {{ ipfs_addresses_no_announce | to_nice_json(indent=2) | indent(4) }},
+    "Swarm": {{ ipfs_addresses_swarm | to_nice_json(indent=2) | indent(4) }}
+  },
+  "Mounts": {
+    "IPFS": "/ipfs",
+    "IPNS": "/ipns",
+    "FuseAllowOther": false
+  },
+  "Discovery": {
+    "MDNS": {
+      "Enabled": {{ ipfs_discovery_enabled | to_json }},
+      "Interval": {{ ipfs_discovery_interval }}
+    }
+  },
+  "Routing": {
+    "AcceleratedDHTClient": {{ ipfs_routing_accelerated_client | to_json }},
+    "Routers": null,
+    "Methods": null
+  },
+  "Ipns": {
+    "RepublishPeriod": "",
+    "RecordLifetime": "",
+    "ResolveCacheSize": 128
+  },
+  "Bootstrap": {{ ipfs_bootstrap | to_nice_json(indent=2) | indent(4) }},
+  "Gateway": {
+    "HTTPHeaders": {
+      "Access-Control-Allow-Headers": [
+        "X-Requested-With",
+        "Range",
+        "User-Agent"
+      ],
+      "Access-Control-Allow-Methods": [ "GET" ],
+      "Access-Control-Allow-Origin": [ "*" ]
+    },
+    "RootRedirect": {{ ipfs_gateway_root_redirect | to_json }},
+    "PathPrefixes": [],
+    "APICommands": [],
+    "NoFetch": false,
+    "NoDNSLink": false,
+    "DeserializedResponses": null,
+    "PublicGateways": {{ ipfs_gateway_public_gateways | to_nice_json(indent=2) | indent(6) }}
+  },
+  "API": {
+    "HTTPHeaders": {{ ipfs_api_http_headers | to_nice_json(indent=2) | indent(4) }}
+  },
+  "Swarm": {
+    "AddrFilters": [],
+    "DisableBandwidthMetrics": {{ ipfs_swarm_disable_bandwidth_metrics | to_json }},
+    "DisableNatPortMap": true,
+    "RelayClient": {},
+    "RelayService": {},
+    "Transports": {
+      "Network": {},
+      "Security": {},
+      "Multiplexers": {}
+    },
+    "ConnMgr": {
+      "Type": "{{ ipfs_swarm_conn_mgr_type }}",
+      "LowWater": {{ ipfs_swarm_conn_mgr_low_water }},
+      "HighWater": {{ ipfs_swarm_conn_mgr_high_water }},
+      "GracePeriod": "{{ ipfs_swarm_conn_mgr_grace_period }}"
+    },
+    "ResourceMgr": {
+      "MaxMemory": "{{ (ipfs_swarm_resource_mgr_max_memory is string) | ternary(ipfs_swarm_resource_mgr_max_memory | human_to_bytes, ipfs_swarm_resource_mgr_max_memory) | int }}"
+    }
+  },
+  "AutoNAT": {},
+  "Pubsub": {
+    "DisableSigning": false,
+    "Router": ""
+  },
+  "Peering": {
+    "Peers": null
+  },
+  "DNS": {
+    "Resolvers": {}
+  },
+  "Migration": {
+    "DownloadSources": [],
+    "Keep": ""
+  },
+  "Provider": {
+    "Strategy": ""
+  },
+  "Reprovider": {
+    "Interval": "{{ ipfs_reprovider_interval }}",
+    "Strategy": "{{ ipfs_reprovider_strategy }}"
+  },
+  "Experimental": {
+    "FilestoreEnabled": false,
+    "UrlstoreEnabled": false,
+    "GraphsyncEnabled": false,
+    "Libp2pStreamMounting": false,
+    "P2pHttpProxy": false,
+    "StrategicProviding": {{ ipfs_experimental_strategic_providing | to_json }},
+    "OptimisticProvide": false,
+    "OptimisticProvideJobsPoolSize": 0
+  },
+  "Plugins": {
+    "Plugins": null
+  },
+  "Pinning": {
+    "RemoteServices": {}
+  },
+  "Internal": {
+    "Bitswap": {
+      "EngineBlockstoreWorkerCount": {{ ipfs_internal_bitswap_engine_blockstore_worker_count }},
+      "EngineTaskWorkerCount": {{ ipfs_internal_bitswap_engine_task_worker_count }},
+      "MaxOutstandingBytesPerPeer": {{ ipfs_internal_bitswap_max_bytes_per_peer | human_to_bytes }},
+      "TaskWorkerCount": {{ ipfs_internal_bitswap_task_worker_count }}
+    }
+  }
+}
