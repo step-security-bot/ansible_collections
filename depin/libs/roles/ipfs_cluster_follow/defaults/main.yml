@@ -4,7 +4,7 @@ ipfs_cluster_follow_download_url:
   "https://dist.ipfs.tech/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}\
   /ipfs-cluster-follow_{{ ipfs_cluster_follow_version }}_{{ ansible_system | lower }}-{{ system_architecture }}.tar.gz"
 
-ipfs_cluster_follow_config_url: http://89.117.72.26:8080/ipns/k51qzi5uqu5dlh2h4gml3k5vik5mas2zos0pyf1shnfzj9d4nsg31lw4x7ujsk
+# ipfs_cluster_follow_config_url: http://89.117.72.26:8080/ipns/k51qzi5uqu5dlh2h4gml3k5vik5mas2zos0pyf1shnfzj9d4nsg31lw4x7ujsk
 
 ipfs_cluster_follow_partial_config: {}
 ipfs_cluster_follow_cluster:
