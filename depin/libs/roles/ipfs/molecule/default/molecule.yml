@@ -14,3 +14,6 @@ provisioner:
     create: ../../../../../shared-tests/orbstack/create.yml
     destroy: ../../../../../shared-tests/orbstack/destroy.yml
     prepare: ../../../../../shared-tests/orbstack/prepare.yml
+  inventory:
+    links:
+      hosts: ../../../../../shared-tests/inventory/

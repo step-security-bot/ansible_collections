@@ -17,4 +17,5 @@
   gather_facts: true
   tasks:
     - name: Test roles
-      ansible.builtin.include_tasks: ../../tasks/main.yml
+      ansible.builtin.include_role:
+        name: depin.libs.ipfs

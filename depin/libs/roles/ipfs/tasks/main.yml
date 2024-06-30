@@ -36,7 +36,7 @@
     dest: /etc/systemd/system/ipfs.service
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
   notify: restart ipfs
 
 - name: Make user group
@@ -63,7 +63,7 @@
     dest: "{{ ipfs_home }}/ipfs_default_config"
     owner: ipfs
     group: ipfs
-    mode: 0644
+    mode: '0644'
 
 - name: Setup IPFS
   become: true
@@ -79,6 +79,7 @@
     - name: Rotate Identity
       when: init_ipfs is changed
       ansible.builtin.command: "{{ item }}"
+      changed_when: false
       loop:
         - ipfs key rotate --oldkey backup
         - ipfs key rm backup

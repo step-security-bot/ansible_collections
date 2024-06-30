@@ -4,7 +4,7 @@
   tasks:
     - name: Print some info
       ansible.builtin.debug:
-        msg: "{{ groups }}"
+        msg: "{{ hostvars }}"
 
     - name: Assert group existence
       ansible.builtin.assert:
@@ -17,4 +17,5 @@
   gather_facts: true
   tasks:
     - name: Test roles
-      ansible.builtin.include_tasks: ../../tasks/main.yml
+      ansible.builtin.include_role:
+        name: depin.libs.ipfs_cluster_follow
