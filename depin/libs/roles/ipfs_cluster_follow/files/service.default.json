@@ -192,7 +192,7 @@
           "wal_bytes_per_sync": 0,
           "levels": [
             {
-              "block_restart_interval": 16,
+              "block_restart_interval": 8,
               "block_size": 4096,
               "block_size_threshold": 90,
               "compression": 2,

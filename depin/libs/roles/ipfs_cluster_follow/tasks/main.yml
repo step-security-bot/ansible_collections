@@ -1,6 +1,5 @@
 ---
 # 1. download ipfs-cluster-follow
-
 - name: Create download folder for ipfs-cluster-follow
   become: true
   ansible.builtin.file:
@@ -19,6 +18,7 @@
     extra_opts: ['--strip-components=1', '--show-stored-names']
     creates: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
 
+# 2. install ipfs-cluster-follow (symlink)
 - name: Symlink binary to path
   become: true
   ansible.builtin.file:
@@ -31,7 +31,48 @@
     force: true
   notify: restart ipfs-cluster-follow
 
-# 2. install ipfs-cluster-follow (symlink)
 # 3. download cluster service.json (or use default and merge defaults.yml)
-# 3. install systemd service
-# 4. start service
+- name: Download cluster service.json
+  when: ipfs_cluster_follow_config_url is defined
+  block:
+    - name: Get remote cluster configuration
+      delegate_to: localhost
+      ansible.builtin.get_url:
+        checksum: "{{ ipfs_cluster_follow_config_checksum | default(omit) }}"
+        url: "{{ ipfs_cluster_follow_config_url }}"
+        dest: /tmp
+        mode: '0644'
+      register: ipfs_cluster_follow_config_file
+
+    - name: Load config
+      vars:
+        _remote_config: "{{ lookup('ansible.builtin.file', ipfs_cluster_follow_config_file.dest) }}"
+        _default_config: "{{ lookup('ansible.builtin.file', 'files/service.default.json') }}"
+        _role_config: "{{ lookup('ansible.builtin.template', 'templates/service.j2') }}"
+      ansible.builtin.set_fact:
+        ipfs_cluster_follow_config:
+          "{{ _default_config |
+              combine(_remote_config) |
+              combine(_role_config, recursive=true) |
+              combine(ipfs_cluster_follow_partial_config, recursive=true)
+          }}"
+
+    - name: Save service.json file
+      become: true
+      ansible.builtin.copy:
+        content: "{{ ipfs_cluster_follow_config }}"
+        dest: /opt/ipfs-cluster-follow/service.json
+        mode: '0644'
+
+- name: Save swarm.key
+  become: true
+  become_user: ipfs
+  ansible.builtin.copy:
+    src: files/swarm.key
+    dest: "{{ ansible_env.HOME }}/.ipfs"
+    mode: '0644'
+
+# 4. install systemd service
+
+
+# 5. start service

@@ -17,5 +17,7 @@
   gather_facts: true
   tasks:
     - name: Test role
+      vars:
+        ipfs_cluster_follow_node_id: 'molecule-test-name'
       ansible.builtin.include_role:
         name: depin.libs.ipfs_cluster_follow
