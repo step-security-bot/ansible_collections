@@ -1,4 +1,10 @@
 ---
+ipfs_cluster_follow_version: v1.1.1
+ipfs_cluster_follow_download_url:
+  "https://dist.ipfs.tech/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}\
+  /ipfs-cluster-follow_{{ ipfs_cluster_follow_version }}_{{ ansible_system | lower }}-{{ system_architecture }}.tar.gz"
+
+
 ipfs_cluster_follow_cluster:
   peername: "{{ ipfs_cluster_follow_node_id }}"
   leave_on_shutdown: false

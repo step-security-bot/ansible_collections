@@ -4,18 +4,17 @@
   tasks:
     - name: Print some info
       ansible.builtin.debug:
-        msg: "{{ groups }}"
+        msg: "{{ '{{' }} groups {{ '}}' }}"
 
     - name: Assert group existence
       ansible.builtin.assert:
         that: "'molecule' in groups"
         fail_msg: |
-          molecule group was not found inside inventory groups: {{ groups }}
+          molecule group was not found inside inventory groups: "{{ '{{' }} groups {{ '}}' }}"
 
 - name: Converge
   hosts: molecule
   gather_facts: true
   tasks:
-    - name: Test ipfs role
-      ansible.builtin.include_role:
-        name: depin.libs.ipfs
+    - name: Test role
+      ansible.builtin.include_tasks: ../../tasks/main.yml

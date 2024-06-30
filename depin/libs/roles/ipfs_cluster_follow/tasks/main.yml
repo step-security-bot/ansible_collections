@@ -1,1 +1,34 @@
 ---
+# 1. download ipfs-cluster-follow
+# 2. install ipfs-cluster-follow (symlink)
+# 3. download cluster service.json (or use default and merge defaults.yml)
+# 3. install systemd service
+# 4. start service
+- name: Create download folder for ipfs-cluster-follow
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: root
+    dest: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}
+
+- name: Download IPFS
+  become: true
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ ipfs_cluster_follow_download_url }}"
+    dest: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}
+    extra_opts: ['--strip-components=1', '--show-stored-names']
+    creates: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
+
+- name: Symlink binary to path
+  become: true
+  ansible.builtin.file:
+    src: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
+    path: /usr/local/bin/ipfs-cluster-follow
+    mode: '0755'
+    owner: root
+    group: root
+    state: hard
+    force: true
+  notify: restart ipfs-cluster-follow

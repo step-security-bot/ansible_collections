@@ -1,2 +1,7 @@
 ---
 # tasks file for skeleton
+
+## Delete after init
+- name: How do skeletons greet each other?
+  ansible.builtin.debug:
+    msg: "Bon'nichiwa"
