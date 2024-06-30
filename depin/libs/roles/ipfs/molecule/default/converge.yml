@@ -16,6 +16,6 @@
   hosts: molecule
   gather_facts: true
   tasks:
-    - name: Test roles
+    - name: Test role
       ansible.builtin.include_role:
         name: depin.libs.ipfs
