@@ -66,14 +66,13 @@
     dest: /opt/ipfs-cluster-follow/service.json
     mode: '0644'
 
-# @todo - needs to point to the parent role for key location
 - name: Save swarm.key
   become: true
   become_user: ipfs
-  when: ansible_parent_role_paths is defined
   ansible.builtin.copy:
-    src: "{{ ansible_parent_role_paths | first }}/files/swarm.key"
-    dest: "{{ ansible_env.HOME }}/.ipfs"
+    # either get swarm key from parent role or default to DeEEP private IPFS network
+    src: "{{ ansible_parent_role_paths | default([]) | first | default('.') }}/files/swarm.key"
+    dest: $HOME/.ipfs
     mode: '0644'
 
 # 4. install systemd service
