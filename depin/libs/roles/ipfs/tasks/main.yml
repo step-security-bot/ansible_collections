@@ -95,8 +95,6 @@
           combine(ipfs_update_config | default({}), recursive=true)
       }}"
 
-
-
 - name: Setup IPFS
   become: true
   become_user: ipfs

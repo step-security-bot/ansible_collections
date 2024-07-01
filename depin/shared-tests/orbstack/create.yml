@@ -38,7 +38,7 @@
 
     - name: Create Orb VM
       when: not _vm['exists']
-      ansible.builtin.command: orbctl create {{ _vm['image'] }} --user {{ _vm['user'] }} --user-data ../cloud-init.yml {{ _vm['name'] }}
+      ansible.builtin.command: orbctl create {{ _vm['image'] }} --user {{ _vm['user'] }} --user-data ./cloud-init.yml {{ _vm['name'] }}
       changed_when: false
       loop: "{{ orbstack_vms }}"
       loop_control:
