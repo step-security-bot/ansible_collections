@@ -1,6 +1,6 @@
 ---
 # 1. download ipfs-cluster-follow
-- name: Create download folder for ipfs-cluster-follow
+- name: Create download folder
   become: true
   ansible.builtin.file:
     state: directory
@@ -9,7 +9,7 @@
     mode: '0755'
     dest: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}
 
-- name: Download IPFS
+- name: Download binary
   become: true
   ansible.builtin.unarchive:
     remote_src: true
@@ -54,9 +54,9 @@
   ansible.builtin.set_fact:
     ipfs_cluster_follow_config:
       "{{ _default_config |
-          combine(_remote_config | default({})) |
-          combine(_role_config, recursive=true) |
-          combine(ipfs_cluster_follow_partial_config, recursive=true)
+          combine(_remote_config | default({}), recursive=true) |
+          combine(ipfs_cluster_follow_use_defaults | ternary({}, _role_config), recursive=true) |
+          combine(ipfs_cluster_follow_update_config | default({}), recursive=true)
       }}"
 
 - name: Save service.json file
@@ -65,6 +65,7 @@
     content: "{{ ipfs_cluster_follow_config }}"
     dest: /opt/ipfs-cluster-follow/service.json
     mode: '0644'
+    force: false
 
 # 4. init ipfs-cluster-follow
 - name: Run init command with dummy url

@@ -64,27 +64,53 @@
     name: ipfs
     group: ipfs
     shell: /bin/bash
-    home: "{{ ipfs_home }}"
     comment: IPFS user
     system: true
 
-- name: Copy default config
-  become: true
-  ansible.builtin.template:
-    src: templates/config.j2
-    dest: "{{ ipfs_home }}/ipfs_default_config"
-    owner: ipfs
-    group: ipfs
+- name: Get remote config
+  delegate_to: localhost
+  when: ipfs_config_url is defined
+  ansible.builtin.get_url:
+    checksum: "{{ ipfs_config_checksum | default(omit) }}"
+    url: "{{ ipfs_config_url }}"
+    dest: /tmp
     mode: '0644'
+  register: _remote_config_file
+
+- name: Set remote config
+  when: _remote_config_file is not skipped
+  ansible.builtin.set_fact:
+    _remote_config: "{{ lookup('ansible.builtin.file', _remote_config_file.dest) }}"
+
+- name: Load config
+  vars:
+    ipfs_use_defaults: true
+    _default_config: "{{ lookup('ansible.builtin.file', 'files/config.json') }}"
+    _role_config: "{{ lookup('ansible.builtin.template', 'templates/config.j2') }}"
+  ansible.builtin.set_fact:
+    ipfs_config:
+      "{{ _default_config |
+          combine(_remote_config | default({}), recursive=true) |
+          combine(ipfs_use_defaults | ternary({}, _role_config), recursive=true) |
+          combine(ipfs_update_config | default({}), recursive=true)
+      }}"
+
+
 
 - name: Setup IPFS
   become: true
   become_user: ipfs
   block:
+    - name: Copy default config
+      ansible.builtin.copy:
+        content: "{{ ipfs_config }}"
+        dest: $HOME/ipfs_default_config
+        mode: '0644'
+
     - name: Init IPFS
-      ansible.builtin.command: ipfs init --empty-repo -- {{ ipfs_home }}/ipfs_default_config
+      ansible.builtin.command: ipfs init --empty-repo -- $HOME/ipfs_default_config
       args:
-        creates: "{{ ipfs_home }}/.ipfs/config"
+        creates: $HOME/.ipfs/config
       register: init_ipfs
 
     ## hacky way to ensure new peer ID and secret is generated from generated config

@@ -25,8 +25,8 @@ ipfs_cluster_follow_cluster:
     memory_limit_bytes: 0
     file_descriptors_limit: 0
   dial_peer_timeout: 3s
-  state_sync_interval: 1h
-  # pin_recover_interval: "{{ ipfs_cluster_follow_cluster['state_sync_interval'] }}"
+  state_sync_interval: &cluster_state_sync_interval 1h
+  pin_recover_interval: *cluster_state_sync_interval
   replication_factor_min: -1
   replication_factor_max: -1
   monitor_ping_interval: 15s
