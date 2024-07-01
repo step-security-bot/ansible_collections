@@ -29,10 +29,22 @@
     force: true
   notify: restart ipfs
 
+- name: Save swarm.key if doesn't exist
+  become: true
+  become_user: ipfs
+  when: ipfs_private_network
+  ansible.builtin.copy:
+    # either get swarm key from parent role or default to DeEEP private IPFS network
+    src: "{{ ansible_parent_role_paths | default([]) | first | default('.') }}/files/swarm.key"
+    dest: $HOME/.ipfs
+    mode: '0644'
+    force: false
+  notify: restart ipfs
+
 - name: Install systemd service
   become: true
   ansible.builtin.template:
-    src: templates/ipfs.service.j2
+    src: templates/systemd.service.j2
     dest: /etc/systemd/system/ipfs.service
     owner: root
     group: root

@@ -19,7 +19,7 @@
     creates: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
 
 # 2. install ipfs-cluster-follow (symlink)
-- name: Symlink binary to path
+- name: Hardlink binary to path
   become: true
   ansible.builtin.file:
     src: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
@@ -66,16 +66,33 @@
     dest: /opt/ipfs-cluster-follow/service.json
     mode: '0644'
 
-- name: Save swarm.key
+# 4. init ipfs-cluster-follow
+- name: Run init command with dummy url
   become: true
   become_user: ipfs
-  ansible.builtin.copy:
-    # either get swarm key from parent role or default to DeEEP private IPFS network
-    src: "{{ ansible_parent_role_paths | default([]) | first | default('.') }}/files/swarm.key"
-    dest: $HOME/.ipfs
+  ansible.builtin.command: ipfs-cluster-follow cluster-follower init http://dummy.url
+  args:
+    creates: $HOME/.ipfs-cluster-follow/cluster-follower/service.json
+
+- name: Symlink modified service.json
+  become: true
+  ansible.builtin.file:
+    src: /opt/ipfs-cluster-follow/service.json
+    path: /home/ipfs/.ipfs-cluster-follow/cluster-follower/service.json
+    mode: '0755'
+    owner: root
+    group: root
+    state: link
+    force: true
+  notify: restart ipfs-cluster-follow
+
+# 5. install systemd service
+- name: Install systemd service
+  become: true
+  ansible.builtin.template:
+    src: templates/systemd.service.j2
+    dest: /etc/systemd/system/ipfs-cluster-follow.service
+    owner: root
+    group: root
     mode: '0644'
-
-# 4. install systemd service
-
-
-# 5. start service
+  notify: restart ipfs-cluster-follow

@@ -1,0 +1,15 @@
+[Unit]
+Description=IPFS Cluster Follow
+After=network.target
+Requires=ipfs.service
+
+[Service]
+User=ipfs
+Group=ipfs
+LimitNOFILE={{ ipfs_cluster_follow_fd_max_files }}
+Environment="IPFS_CLUSTER_FD_MAX={{ ipfs_cluster_follow_fd_max_files}}"
+ExecStart=/usr/local/bin/ipfs-cluster-follow cluster-follower run
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
