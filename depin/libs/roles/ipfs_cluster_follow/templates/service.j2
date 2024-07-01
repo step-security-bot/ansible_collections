@@ -1,0 +1,191 @@
+{
+  "cluster": {{ ipfs_cluster_follow_cluster | to_nice_json }},
+  "consensus": {
+    "crdt": {{ ipfs_cluster_follow_consensus_crdt | to_nice_json }}
+  },
+  "api": {
+    "ipfsproxy": {
+      "listen_multiaddress": "/ip4/127.0.0.1/tcp/9095",
+      "node_multiaddress": "/ip4/127.0.0.1/tcp/5001",
+      "log_file": "",
+      "read_timeout": "0s",
+      "read_header_timeout": "5s",
+      "write_timeout": "0s",
+      "idle_timeout": "1m0s",
+      "max_header_bytes": 4096
+    },
+    "pinsvcapi": {
+      "http_listen_multiaddress": "/ip4/127.0.0.1/tcp/9097",
+      "read_timeout": "0s",
+      "read_header_timeout": "5s",
+      "write_timeout": "0s",
+      "idle_timeout": "2m0s",
+      "max_header_bytes": 4096,
+      "basic_auth_credentials": null,
+      "http_log_file": "",
+      "headers": {},
+      "cors_allowed_origins": [
+        "*"
+      ],
+      "cors_allowed_methods": [
+        "GET"
+      ],
+      "cors_allowed_headers": [],
+      "cors_exposed_headers": [
+        "Content-Type",
+        "X-Stream-Output",
+        "X-Chunked-Output",
+        "X-Content-Length"
+      ],
+      "cors_allow_credentials": true,
+      "cors_max_age": "0s"
+    },
+    "restapi": {
+      "http_listen_multiaddress": "/ip4/127.0.0.1/tcp/9094",
+      "read_timeout": "0s",
+      "read_header_timeout": "5s",
+      "write_timeout": "0s",
+      "idle_timeout": "2m0s",
+      "max_header_bytes": 4096,
+      "basic_auth_credentials": null,
+      "http_log_file": "",
+      "headers": {},
+      "cors_allowed_origins": [
+        "*"
+      ],
+      "cors_allowed_methods": [
+        "GET"
+      ],
+      "cors_allowed_headers": [],
+      "cors_exposed_headers": [
+        "Content-Type",
+        "X-Stream-Output",
+        "X-Chunked-Output",
+        "X-Content-Length"
+      ],
+      "cors_allow_credentials": true,
+      "cors_max_age": "0s"
+    }
+  },
+  "ipfs_connector": {
+    "ipfshttp": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp | to_nice_json }}
+  },
+  "pin_tracker": {
+    "stateless": {{ ipfs_cluster_follow_pin_tracker_stateless | to_nice_json }}
+  },
+  "monitor": {
+    "pubsubmon": {
+      "check_interval": "15s"
+    }
+  },
+  "allocator": {
+    "balanced": {
+      "allocate_by": {{ ipfs_cluster_follow_allocator_balanced_allocate_by | to_nice_json }}
+    }
+  },
+  "informer": {{ ipfs_cluster_follow_informer | to_nice_json }},
+  "observations": {
+    "metrics": {{ ipfs_cluster_follow_observations_metrics | to_nice_json }},
+    "tracing": {
+      "enable_tracing": false,
+      "jaeger_agent_endpoint": "/ip4/0.0.0.0/udp/6831",
+      "sampling_prob": 0.3,
+      "service_name": "cluster-daemon"
+    }
+  },
+  "datastore": {
+    "pebble": {
+      "pebble_options": {
+        "cache_size_bytes": 1073741824,
+        "bytes_per_sync": 1048576,
+        "disable_wal": false,
+        "flush_delay_delete_range": 0,
+        "flush_delay_range_key": 0,
+        "flush_split_bytes": 4194304,
+        "format_major_version": 16,
+        "l0_compaction_file_threshold": 750,
+        "l0_compaction_threshold": 4,
+        "l0_stop_writes_threshold": 12,
+        "l_base_max_bytes": 134217728,
+        "max_open_files": {{ ipfs_cluster_follow_datastore_pebble.pebble_options.max_open_files }},
+        "max_concurrent_compactions": 5,
+        "mem_table_size": 67108864,
+        "mem_table_stop_writes_threshold": 20,
+        "read_only": false,
+        "wal_bytes_per_sync": 0,
+        "levels": [
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 4194304
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 8388608
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 16777216
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 33554432
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 67108864
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 134217728
+          },
+          {
+            "block_restart_interval": 16,
+            "block_size": 4096,
+            "block_size_threshold": 90,
+            "compression": 2,
+            "filter_type": 0,
+            "filter_policy": 10,
+            "index_block_size": 4096,
+            "target_file_size": 268435456
+          }
+        ]
+      }
+    }
+  }
+}

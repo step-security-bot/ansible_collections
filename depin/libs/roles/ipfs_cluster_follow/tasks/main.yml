@@ -1,0 +1,99 @@
+---
+# 1. download ipfs-cluster-follow
+- name: Create download folder
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+    dest: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}
+
+- name: Download binary
+  become: true
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ ipfs_cluster_follow_download_url }}"
+    dest: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}
+    extra_opts: ['--strip-components=1', '--show-stored-names']
+    creates: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
+
+# 2. install ipfs-cluster-follow (symlink)
+- name: Hardlink binary to path
+  become: true
+  ansible.builtin.file:
+    src: /opt/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}/ipfs-cluster-follow
+    path: /usr/local/bin/ipfs-cluster-follow
+    mode: '0755'
+    owner: root
+    group: root
+    state: hard
+    force: true
+  notify: restart ipfs-cluster-follow
+
+# 3. download cluster service.json (or use default and merge defaults.yml)
+- name: Get remote config
+  delegate_to: localhost
+  when: ipfs_cluster_follow_config_url is defined
+  ansible.builtin.get_url:
+    checksum: "{{ ipfs_cluster_follow_config_checksum | default(omit) }}"
+    url: "{{ ipfs_cluster_follow_config_url }}"
+    dest: /tmp
+    mode: '0644'
+  register: _remote_config_file
+
+- name: Set remote config
+  when: _remote_config_file is not skipped
+  ansible.builtin.set_fact:
+    _remote_config: "{{ lookup('ansible.builtin.file', _remote_config_file.dest) }}"
+
+- name: Load config
+  vars:
+    _default_config: "{{ lookup('ansible.builtin.file', 'files/service.default.json') }}"
+    _role_config: "{{ lookup('ansible.builtin.template', 'templates/service.j2') }}"
+  ansible.builtin.set_fact:
+    ipfs_cluster_follow_config:
+      "{{ _default_config |
+          combine(_remote_config | default({}), recursive=true) |
+          combine(ipfs_cluster_follow_use_defaults | ternary({}, _role_config), recursive=true) |
+          combine(ipfs_cluster_follow_update_config | default({}), recursive=true)
+      }}"
+
+- name: Save service.json file
+  become: true
+  ansible.builtin.copy:
+    content: "{{ ipfs_cluster_follow_config }}"
+    dest: /opt/ipfs-cluster-follow/service.json
+    mode: '0644'
+    force: false
+
+# 4. init ipfs-cluster-follow
+- name: Run init command with dummy url
+  become: true
+  become_user: ipfs
+  ansible.builtin.command: ipfs-cluster-follow cluster-follower init http://dummy.url
+  args:
+    creates: $HOME/.ipfs-cluster-follow/cluster-follower/service.json
+
+- name: Symlink modified service.json
+  become: true
+  ansible.builtin.file:
+    src: /opt/ipfs-cluster-follow/service.json
+    path: /home/ipfs/.ipfs-cluster-follow/cluster-follower/service.json
+    mode: '0755'
+    owner: root
+    group: root
+    state: link
+    force: true
+  notify: restart ipfs-cluster-follow
+
+# 5. install systemd service
+- name: Install systemd service
+  become: true
+  ansible.builtin.template:
+    src: templates/systemd.service.j2
+    dest: /etc/systemd/system/ipfs-cluster-follow.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart ipfs-cluster-follow

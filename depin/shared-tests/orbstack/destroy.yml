@@ -6,6 +6,8 @@
     - name: Stop and remove Orb VM
       delegate_to: localhost
       ansible.builtin.command: orbctl delete {{ inventory_hostname | split('@') | first }}
+      changed_when: false
+      failed_when: false
 
 - name: Remove dynamic molecule inventory
   hosts: localhost
@@ -13,5 +15,5 @@
   tasks:
     - name: Remove dynamic inventory file
       ansible.builtin.file:
-        path: "{{ molecule_ephemeral_directory }}/inventory/molecule_inventory.yml"
+        path: ../inventory/molecule_inventory.yml
         state: absent

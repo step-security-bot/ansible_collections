@@ -5,6 +5,7 @@
     state: directory
     owner: root
     group: root
+    mode: '0755'
     dest: /opt/ipfs/{{ ipfs_version }}
 
 - name: Download IPFS
@@ -28,14 +29,26 @@
     force: true
   notify: restart ipfs
 
+- name: Save swarm.key if doesn't exist
+  become: true
+  become_user: ipfs
+  when: ipfs_private_network
+  ansible.builtin.copy:
+    # either get swarm key from parent role or default to DeEEP private IPFS network
+    src: "{{ ansible_parent_role_paths | default([]) | first | default('.') }}/files/swarm.key"
+    dest: $HOME/.ipfs
+    mode: '0644'
+    force: false
+  notify: restart ipfs
+
 - name: Install systemd service
   become: true
   ansible.builtin.template:
-    src: templates/ipfs.service.j2
+    src: templates/systemd.service.j2
     dest: /etc/systemd/system/ipfs.service
     owner: root
     group: root
-    mode: 0644
+    mode: '0644'
   notify: restart ipfs
 
 - name: Make user group
@@ -51,33 +64,58 @@
     name: ipfs
     group: ipfs
     shell: /bin/bash
-    home: "{{ ipfs_home }}"
     comment: IPFS user
     system: true
 
-- name: Copy default config
-  become: true
-  ansible.builtin.template:
-    src: templates/config.j2
-    dest: "{{ ipfs_home }}/ipfs_default_config"
-    owner: ipfs
-    group: ipfs
-    mode: 0644
+- name: Get remote config
+  delegate_to: localhost
+  when: ipfs_config_url is defined
+  ansible.builtin.get_url:
+    checksum: "{{ ipfs_config_checksum | default(omit) }}"
+    url: "{{ ipfs_config_url }}"
+    dest: /tmp
+    mode: '0644'
+  register: _remote_config_file
+
+- name: Set remote config
+  when: _remote_config_file is not skipped
+  ansible.builtin.set_fact:
+    _remote_config: "{{ lookup('ansible.builtin.file', _remote_config_file.dest) }}"
+
+- name: Load config
+  vars:
+    ipfs_use_defaults: true
+    _default_config: "{{ lookup('ansible.builtin.file', 'files/config.json') }}"
+    _role_config: "{{ lookup('ansible.builtin.template', 'templates/config.j2') }}"
+  ansible.builtin.set_fact:
+    ipfs_config:
+      "{{ _default_config |
+          combine(_remote_config | default({}), recursive=true) |
+          combine(ipfs_use_defaults | ternary({}, _role_config), recursive=true) |
+          combine(ipfs_update_config | default({}), recursive=true)
+      }}"
 
 - name: Setup IPFS
   become: true
   become_user: ipfs
   block:
+    - name: Copy default config
+      ansible.builtin.copy:
+        content: "{{ ipfs_config }}"
+        dest: $HOME/ipfs_default_config
+        mode: '0644'
+
     - name: Init IPFS
-      ansible.builtin.command: ipfs init --empty-repo -- {{ ipfs_home }}/ipfs_default_config
+      ansible.builtin.command: ipfs init --empty-repo -- $HOME/ipfs_default_config
       args:
-        creates: "{{ ipfs_home }}/.ipfs/config"
+        creates: $HOME/.ipfs/config
       register: init_ipfs
 
     ## hacky way to ensure new peer ID and secret is generated from generated config
     - name: Rotate Identity
       when: init_ipfs is changed
       ansible.builtin.command: "{{ item }}"
+      changed_when: false
       loop:
         - ipfs key rotate --oldkey backup
         - ipfs key rm backup

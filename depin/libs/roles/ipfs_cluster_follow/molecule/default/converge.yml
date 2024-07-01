@@ -4,7 +4,7 @@
   tasks:
     - name: Print some info
       ansible.builtin.debug:
-        msg: "{{ groups }}"
+        msg: "{{ hostvars }}"
 
     - name: Assert group existence
       ansible.builtin.assert:
@@ -16,6 +16,8 @@
   hosts: molecule
   gather_facts: true
   tasks:
-    - name: Test ipfs role
+    - name: Test role
+      vars:
+        ipfs_cluster_follow_node_id: 'molecule-test-name'
       ansible.builtin.include_role:
-        name: depin.libs.ipfs
+        name: depin.libs.ipfs_cluster_follow
