@@ -6,6 +6,7 @@ ipfs_cluster_follow_download_url:
 
 ipfs_cluster_follow_fd_max_files: 1000000
 
+ipfs_cluster_follow_use_defaults: false
 ipfs_cluster_follow_partial_config: {}
 ipfs_cluster_follow_cluster:
   peername: "{{ ipfs_cluster_follow_node_id }}"

@@ -8,7 +8,7 @@ ipfs_download_url:
 ipfs_private_network: false
 ipfs_fd_max: 1000000
 ipfs_enable_gc: false
-
+ipfs_use_defaults: false
 ## dummy identity that'll be instantly rotated after init
 ipfs_identity:
   PeerID: 12D3KooWCixTABwjSsxLxiz1Wm8gaVWYuUpfZvGZoNUXGjtoP5sr
