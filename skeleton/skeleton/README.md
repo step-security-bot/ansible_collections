@@ -27,11 +27,6 @@ Including an example of how to use your role (for instance, with variables passe
       roles:
          - { role: username.rolename, x: 42 }
 
-Security
--------
-
-- [] files/ipfs/swarm.key
-
 License
 -------
 
