@@ -4,64 +4,60 @@ ipfs_cluster_follow_download_url:
   "https://dist.ipfs.tech/ipfs-cluster-follow/{{ ipfs_cluster_follow_version }}\
   /ipfs-cluster-follow_{{ ipfs_cluster_follow_version }}_{{ ansible_system | lower }}-{{ system_architecture }}.tar.gz"
 
+ipfs_cluster_follow_cluster_name: cluster-follower
 ipfs_cluster_follow_fd_max_files: 1000000
 
-ipfs_cluster_follow_use_defaults: false
-ipfs_cluster_follow_partial_config: {}
-ipfs_cluster_follow_cluster:
-  peername: "{{ ipfs_cluster_follow_node_id }}"
-  leave_on_shutdown: false
-  listen_multiaddress:
-    - /ip4/0.0.0.0/tcp/9096
-    - /ip4/0.0.0.0/udp/9096/quic
-  announce_multiaddress: []
-  no_announce_multiaddress: []
-  enable_relay_hop: true
-  connection_manager:
-    high_water: 400
-    low_water: 100
-    grace_period: 2m
-  resource_manager:
-    enabled: true
-    memory_limit_bytes: 0
-    file_descriptors_limit: 0
-  dial_peer_timeout: 3s
-  state_sync_interval: &cluster_state_sync_interval 1h
-  pin_recover_interval: *cluster_state_sync_interval
-  replication_factor_min: -1
-  replication_factor_max: -1
-  monitor_ping_interval: 15s
-  peer_watch_interval: 5s
-  mdns_interval: 10s
-  pin_only_on_trusted_peers: false
-  pin_only_on_untrusted_peers: false
-  disable_repinning: true
-  peer_addresses: []
+ipfs_cluster_follow_cluster_leave_on_shutdown: false
+ipfs_cluster_follow_cluster_listen_multiaddress:
+  - /ip4/0.0.0.0/tcp/9096
+  - /ip4/0.0.0.0/udp/9096/quic
+ipfs_cluster_follow_cluster_announce_multiaddress: []
+ipfs_cluster_follow_cluster_no_announce_multiaddress: []
+ipfs_cluster_follow_cluster_enable_relay_hop: true
 
-ipfs_cluster_follow_consensus_crdt:
-  trusted_peers:
-    - "*"
-  batching:
-    max_batch_size: 50
-    max_batch_age: 1m
-    max_queue_size: 5000
-  repair_interval: 1h
-  rebroadcast_interval: 15s
+ipfs_cluster_follow_cluster_connection_manager_high_water: 400
+ipfs_cluster_follow_cluster_connection_manager_low_water: "{{ ipfs_cluster_follow_cluster_connection_manager_high_water / 4 }}"
+ipfs_cluster_follow_cluster_connection_manager_grace_period: 2m
 
-ipfs_cluster_follow_ipfs_connector_ipfshttp:
-  node_multiaddress: /ip4/127.0.0.1/tcp/5001
-  connect_swarms_delay: 30s
-  ipfs_request_timeout: 5m
-  pin_timeout: 20s
-  unpin_timeout: 3h
-  repogc_timeout: 24h
-  informer_trigger_interval: 0
+ipfs_cluster_follow_cluster_resource_manager_enabled: true
+ipfs_cluster_follow_cluster_resource_manager_memory_limit_bytes: "{{ (ansible_memtotal_mb | human_to_bytes(default_unit='M') / 2) | int }}"
+ipfs_cluster_follow_cluster_resource_manager_file_descriptors_limit: 0
 
-ipfs_cluster_follow_pin_tracker_stateless:
-    concurrent_pins: 10
-    priority_pin_max_age: 24h
-    priority_pin_max_retries: 3
-    max_pin_queue_size: 200000000
+ipfs_cluster_follow_cluster_dial_peer_timeout: 3s
+ipfs_cluster_follow_cluster_state_sync_interval: 1h
+ipfs_cluster_follow_cluster_pin_recover_interval: "{{ ipfs_cluster_follow_cluster_state_sync_interval }}"
+ipfs_cluster_follow_cluster_replication_factor_min: -1
+ipfs_cluster_follow_cluster_replication_factor_max: -1
+ipfs_cluster_follow_cluster_monitor_ping_interval: 15s
+ipfs_cluster_follow_cluster_peer_watch_interval: 5s
+ipfs_cluster_follow_cluster_mdns_interval: 10s
+ipfs_cluster_follow_cluster_pin_only_on_trusted_peers: false
+ipfs_cluster_follow_cluster_pin_only_on_untrusted_peers: false
+ipfs_cluster_follow_cluster_disable_repinning: true
+
+ipfs_cluster_follow_consensus_crdt_cluster_name: "ipfs-cluster"
+ipfs_cluster_follow_consensus_crdt_trusted_peers:
+  - "*"
+ipfs_cluster_follow_consensus_crdt_batching_max_batch_size: 50
+ipfs_cluster_follow_consensus_crdt_batching_max_batch_age: 1m
+ipfs_cluster_follow_consensus_crdt_batching_max_queue_size: 5000
+ipfs_cluster_follow_consensus_crdt_repair_interval: 1h
+ipfs_cluster_follow_consensus_crdt_rebroadcast_interval: 15s
+
+ipfs_cluster_follow_api_restapi_http_listen_multiaddress:
+
+ipfs_cluster_follow_ipfs_connector_ipfshttp_node_multiaddress: /ip4/127.0.0.1/tcp/5001
+ipfs_cluster_follow_ipfs_connector_ipfshttp_connect_swarms_delay: 30s
+ipfs_cluster_follow_ipfs_connector_ipfshttp_ipfs_request_timeout: 5m
+ipfs_cluster_follow_ipfs_connector_ipfshttp_pin_timeout: 20s
+ipfs_cluster_follow_ipfs_connector_ipfshttp_unpin_timeout: 3h
+ipfs_cluster_follow_ipfs_connector_ipfshttp_repogc_timeout: 24h
+ipfs_cluster_follow_ipfs_connector_ipfshttp_informer_trigger_interval: 0
+
+ipfs_cluster_follow_pin_tracker_stateless_concurrent_pins: 10
+ipfs_cluster_follow_pin_tracker_stateless_priority_pin_max_age: 24h
+ipfs_cluster_follow_pin_tracker_stateless_priority_pin_max_retries: 3
+ipfs_cluster_follow_pin_tracker_stateless_max_pin_queue_size: 200000
 
 ipfs_cluster_follow_allocator_type: default
 ipfs_cluster_follow_allocator_balanced_allocate_by:
@@ -69,23 +65,18 @@ ipfs_cluster_follow_allocator_balanced_allocate_by:
   - pinqueue
   - freespace
 
-ipfs_cluster_follow_informer:
-  disk:
-    metric_ttl: 5m
-    metric_type: freespace
-  pinqueue:  
-    metric_ttl: 5m
-    weight_bucket_size: 100000
-  tags:
-    metric_ttl: 5m
-    tags:
-      group: "{{ ipfs_cluster_follow_allocator_type }}"
+ipfs_cluster_follow_informer_disk_metric_ttl: 5m
+ipfs_cluster_follow_informer_disk_metric_type: freespace
 
-ipfs_cluster_follow_observations_metrics:
-    enable_stats: true
-    prometheus_endpoint: /ip4/0.0.0.0/tcp/8888
-    reporting_interval: 15s
+ipfs_cluster_follow_informer_pinqueue_metric_ttl: 5m
+ipfs_cluster_follow_informer_pinqueue_weight_bucket_size: 100000
 
-ipfs_cluster_follow_datastore_pebble:
-  pebble_options:
-      max_open_files: 1000000
+ipfs_cluster_follow_informer_tags_metric_ttl: 5m
+ipfs_cluster_follow_informer_tags_tags:
+  group: "{{ ipfs_cluster_follow_allocator_type }}"
+
+ipfs_cluster_follow_observations_metrics_enable_stats: true
+ipfs_cluster_follow_observations_metrics_prometheus_endpoint: /ip4/0.0.0.0/tcp/8888
+ipfs_cluster_follow_observations_metrics_reporting_interval: 15s
+
+ipfs_cluster_follow_datastore_pebble_pebble_options_max_open_files: 1000000

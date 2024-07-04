@@ -1,0 +1,14 @@
+---
+- name: Get pidof resize2fs
+  community.general.pids:
+      name: resize2fs
+  register: _resize2fs
+
+- name: Wait for resize2fs
+  when: _resize2fs | length
+  ansible.builtin.wait_for:
+    path: /proc/{{ _pid }}/status
+    state: absent
+  loop: "{{ _resize2fs['pids'] }}"
+  loop_control:
+    loop_var: _pid

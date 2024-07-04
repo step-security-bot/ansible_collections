@@ -1,0 +1,26 @@
+---
+- name: Run preflight
+  ansible.builtin.include_tasks: preflight.yml
+
+- name: Install In-a-Dyn
+  become: true
+  ansible.builtin.apt:
+    name: inadyn
+    update_cache: true
+    state: latest
+
+- name: Update inadyn.conf for Cloudflare
+  become: true
+  ansible.builtin.blockinfile:
+    path: /etc/inadyn.conf
+    marker: "# {mark} ANSIBLE MANAGED -- CLOUDFLARE PROVIDER"
+    block: |
+      provider cloudflare.com {
+          username = {{ (inadyn_hostname | split('.'))[-2:] | join('.') }}
+          password = {{ inadyn_cloudflare_token }}
+          hostname = {{ inadyn_hostname }}
+          ttl      = 1
+          proxied  = false
+      }
+    create: true
+  notify: restart inadyn

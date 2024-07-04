@@ -1,5 +1,6 @@
-## don't commit local inventories
-**/shared-tests/inventory/*
-.DS_Store
-*.tar.gz
+# collections
 .ansible-sign
+*.tar*
+
+.DS_Store
+__pycache__

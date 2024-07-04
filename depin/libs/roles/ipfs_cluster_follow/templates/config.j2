@@ -1,0 +1,101 @@
+{
+  "cluster": {
+    "peername": {{ ipfs_cluster_follow_cluster_peername | to_json }},
+    "leave_on_shutdown": {{ ipfs_cluster_follow_cluster_leave_on_shutdown | to_json }},
+    "listen_multiaddress": {{ ipfs_cluster_follow_cluster_listen_multiaddress | to_json }},
+    "announce_multiaddress": {{ ipfs_cluster_follow_cluster_announce_multiaddress | to_json }},
+    "no_announce_multiaddress": {{ ipfs_cluster_follow_cluster_no_announce_multiaddress | to_json }},
+    "enable_relay_hop": {{ ipfs_cluster_follow_cluster_enable_relay_hop | to_json }},
+    "connection_manager": {
+      "high_water": {{ ipfs_cluster_follow_cluster_connection_manager_high_water | to_json }},
+      "low_water": {{ ipfs_cluster_follow_cluster_connection_manager_low_water | int }},
+      "grace_period": {{ ipfs_cluster_follow_cluster_connection_manager_grace_period | to_json }}
+    },
+    "resource_manager": {
+      "enabled": {{ ipfs_cluster_follow_cluster_resource_manager_enabled | to_json }},
+      "memory_limit_bytes": {{ ipfs_cluster_follow_cluster_resource_manager_memory_limit_bytes | int }},
+      "file_descriptors_limit": {{ ipfs_cluster_follow_cluster_resource_manager_file_descriptors_limit | int }}
+    },
+    "dial_peer_timeout": {{ ipfs_cluster_follow_cluster_dial_peer_timeout | to_json }},
+    "state_sync_interval": {{ ipfs_cluster_follow_cluster_state_sync_interval | to_json }},
+    "pin_recover_interval": {{ ipfs_cluster_follow_cluster_pin_recover_interval | to_json }},
+    "replication_factor_min": {{ ipfs_cluster_follow_cluster_replication_factor_min | int }},
+    "replication_factor_max": {{ ipfs_cluster_follow_cluster_replication_factor_max | int }},
+    "monitor_ping_interval": {{ ipfs_cluster_follow_cluster_monitor_ping_interval | to_json }},
+    "peer_watch_interval": {{ ipfs_cluster_follow_cluster_peer_watch_interval | to_json }},
+    "mdns_interval": {{ ipfs_cluster_follow_cluster_mdns_interval | to_json }},
+    "pin_only_on_trusted_peers": {{ ipfs_cluster_follow_cluster_pin_only_on_trusted_peers | to_json }},
+    "pin_only_on_untrusted_peers": {{ ipfs_cluster_follow_cluster_pin_only_on_untrusted_peers | to_json }},
+    "disable_repinning": {{ ipfs_cluster_follow_cluster_disable_repinning | to_json }}
+  },
+  "consensus": {
+    "crdt": {
+      "cluster_name": {{ ipfs_cluster_follow_consensus_crdt_cluster_name | to_json }},
+      "trusted_peers": {{ ipfs_cluster_follow_consensus_crdt_trusted_peers | to_json }},
+      "batching": {
+        "max_batch_size": {{ ipfs_cluster_follow_consensus_crdt_batching_max_batch_size | int }},
+        "max_batch_age": {{ ipfs_cluster_follow_consensus_crdt_batching_max_batch_age | to_json }},
+        "max_queue_size": {{ ipfs_cluster_follow_consensus_crdt_batching_max_queue_size | int }}
+      },
+      "repair_interval": {{ ipfs_cluster_follow_consensus_crdt_repair_interval | to_json }}
+    }
+  },
+  "api": {
+    "restapi": {
+      "http_listen_multiaddress": {{ ipfs_cluster_follow_api_restapi_http_listen_multiaddress | to_json }}
+    }
+  },
+  "ipfs_connector": {
+    "ipfshttp": {
+      "node_multiaddress": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_node_multiaddress | to_json }},
+      "connect_swarms_delay": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_connect_swarms_delay | to_json }},
+      "ipfs_request_timeout": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_ipfs_request_timeout | to_json }},
+      "pin_timeout": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_pin_timeout | to_json }},
+      "unpin_timeout": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_unpin_timeout | to_json }},
+      "repogc_timeout": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_repogc_timeout | to_json }},
+      "informer_trigger_interval": {{ ipfs_cluster_follow_ipfs_connector_ipfshttp_informer_trigger_interval | int }}
+    }
+  },
+  "pin_tracker": {
+    "stateless": {
+      "concurrent_pins": {{ ipfs_cluster_follow_pin_tracker_stateless_concurrent_pins | int }},
+      "priority_pin_max_age": {{ ipfs_cluster_follow_pin_tracker_stateless_priority_pin_max_age | to_json }},
+      "priority_pin_max_retries": {{ ipfs_cluster_follow_pin_tracker_stateless_priority_pin_max_retries | int }},
+      "max_pin_queue_size": {{ ipfs_cluster_follow_pin_tracker_stateless_max_pin_queue_size | int }}
+    }
+  },
+  "allocator": {
+    "type": {{ ipfs_cluster_follow_allocator_type | to_json }},
+    "balanced": {
+      "allocate_by": {{ ipfs_cluster_follow_allocator_balanced_allocate_by | to_json }}
+    }
+  },
+  "informer": {
+    "disk": {
+      "metric_ttl": {{ ipfs_cluster_follow_informer_disk_metric_ttl | to_json }},
+      "metric_type": {{ ipfs_cluster_follow_informer_disk_metric_type | to_json }}
+    },
+    "pinqueue": {
+      "metric_ttl": {{ ipfs_cluster_follow_informer_pinqueue_metric_ttl | to_json }},
+      "weight_bucket_size": {{ ipfs_cluster_follow_informer_pinqueue_weight_bucket_size | int }}
+    },
+    "tags": {
+      "metric_ttl": {{ ipfs_cluster_follow_informer_tags_metric_ttl | to_json }},
+      "tags": {{ ipfs_cluster_follow_informer_tags_tags | to_json }}
+    }
+  },
+  "observations": {
+    "metrics": {
+      "enable_stats": {{ ipfs_cluster_follow_observations_metrics_enable_stats | to_json }},
+      "prometheus_endpoint": {{ ipfs_cluster_follow_observations_metrics_prometheus_endpoint | to_json }},
+      "reporting_interval": {{ ipfs_cluster_follow_observations_metrics_reporting_interval | to_json }}
+    }
+  },
+  "datastore": {
+    "pebble": {
+      "pebble_options": {
+        "max_open_files": {{ ipfs_cluster_follow_datastore_pebble_pebble_options_max_open_files | int }}
+      }
+    }
+  }
+}

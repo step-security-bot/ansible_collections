@@ -1,3 +1,4 @@
+#jinja2: trim_blocks:False
 [Unit]
 Description=IPFS Cluster Follow
 After=network.target
@@ -6,9 +7,18 @@ Requires=ipfs.service
 [Service]
 User=ipfs
 Group=ipfs
+
 LimitNOFILE={{ ipfs_cluster_follow_fd_max_files }}
-Environment="IPFS_CLUSTER_FD_MAX={{ ipfs_cluster_follow_fd_max_files}}"
-ExecStart=/usr/local/bin/ipfs-cluster-follow cluster-follower run
+
+Environment="IPFS_CLUSTER_FD_MAX={{ ipfs_cluster_follow_fd_max_files }}"
+{% if ipfs_cluster_follow_env_vars is defined %}
+{% for env in ipfs_cluster_follow_env_vars %}
+Environment="{{ env }}={{ ipfs_cluster_follow_env_vars[env] }}"
+{% endfor -%}
+{% endif -%}
+
+ExecStart=/usr/local/bin/ipfs-cluster-follow {{ ipfs_cluster_follow_cluster_name }} run {{ ipfs_cluster_follow_command_args | default(omit) }}
+ExecStopPost=+/usr/bin/rm -f %h/.ipfs-cluster-follow/{{ ipfs_cluster_follow_cluster_name }}/api-socket
 Restart=on-failure
 
 [Install]

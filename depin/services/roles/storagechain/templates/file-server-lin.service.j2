@@ -1,0 +1,13 @@
+[Unit]
+Description=Storagechain - File Server
+After=network.target
+Requires=ipfs-cluster-follow.service
+
+[Service]
+User=ipfs
+Group=ipfs
+ExecStart=/usr/local/bin/file-server-lin
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,38 @@
+#cloud-config
+
+fqdn: {{ hostname }}
+manage_etc_hosts: localhost
+prefer_fqdn_over_hostname: true
+
+packages:
+  - pipx
+  - git
+  - acl
+  - nano
+  - curl
+  - jq
+package_upgrade: true
+package_update: true
+
+ssh_pwauth: false
+
+users:
+  - name: nerdnode
+    gecos: NerdNode Admin Account
+    groups: users,admin,wheel
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOEu3Yh+xr+oNfcj72bcqcZNhg3D1SzeHh+BQKX4/05V anthony@nerdnode.io
+
+write_files:
+- path: /etc/environment
+  content: |
+    PIPX_HOME=/opt/pipx
+    PIPX_BIN_DIR=/usr/local/bin
+  append: true
+
+runcmd:
+  - [ pipx, install, ansible-core, ansible-sign ]
+  - [ pipx, ensurepath ]

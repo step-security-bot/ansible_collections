@@ -1,0 +1,4 @@
+---
+storagechain_download_url: https://file-view-prod.storagechain.io/api/file/download/tUwAr7cF5QiPJnIZ35Vq0UXSqpgFuN0c
+storagechain_ipfs_cluster_args: "{{ storagechain_email }}:{{ storagechain_password }}:{{ storagechain_node_id }}"
+storagechain_dns: "{{ storagechain_node_id }}.sc.nerdnode.io"

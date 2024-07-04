@@ -1,0 +1,73 @@
+---
+- name: Create
+  hosts: localhost
+  gather_facts: false
+  vars:
+    molecule_inventory:
+      molecule:
+        hosts: {}
+  tasks:
+    - name: Create VM (recreate if exists)
+      vars:
+        _vm: "{{ molecule_yml['platforms'] | first }}"
+      theko2fi.multipass.multipass_vm:
+        name: "{{ _vm['name'] }}"
+        cpus: 4
+        memory: 2G
+        disk: 10G
+        cloud_init: ../cloud-init.yml
+        image: "{{ _vm['image'] }}"
+        recreate: false
+        state: started
+      register: multipass_vm
+
+    - name: Get VM info
+      vars:
+        _hostname: "{{ multipass_vm['result']['info'].keys() | first }}"
+      theko2fi.multipass.multipass_vm_info:
+        name: "{{ _hostname }}"
+      register: multipass_vm_info
+      until: (multipass_vm_info['result']['info'][_hostname]['state'] | lower) == 'running'
+
+    - name: Add VM to molecule_inventory
+      vars:
+        _hostname: "{{ multipass_vm_info['result']['info'].keys() | first }}"
+        inventory_partial_yaml: |
+          molecule:
+            hosts:
+              {{ _hostname }}:
+                ansible_user: nerdnode
+                ansible_host: {{ multipass_vm_info['result']['info'][_hostname]['ipv4'] | first }}
+      ansible.builtin.set_fact:
+        molecule_inventory: >
+          {{ molecule_inventory | combine(inventory_partial_yaml | from_yaml, recursive=true) }}
+
+    - name: Dump molecule_inventory
+      ansible.builtin.copy:
+        content: |
+          {{ molecule_inventory | to_nice_yaml }}
+        dest: ../../inventory/molecule_inventory.yml
+        mode: '0600'
+
+    - name: Force inventory refresh
+      ansible.builtin.meta: refresh_inventory
+
+    - name: Fail if molecule group is missing
+      ansible.builtin.assert:
+        that: "'molecule' in groups"
+        fail_msg: |
+          molecule group was not found inside inventory groups: {{ groups }}
+      run_once: true # noqa: run-once[task]
+
+- name: Validate that inventory was refreshed
+  hosts: molecule
+  gather_facts: false
+  tasks:
+    - name: Check uname
+      ansible.builtin.raw: uname -a
+      register: result
+      changed_when: false
+
+    - name: Display uname info
+      ansible.builtin.debug:
+        msg: "{{ result.stdout }}"

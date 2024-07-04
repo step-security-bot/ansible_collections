@@ -1,0 +1,9 @@
+---
+- name: Restart In-a-Dyn
+  become: true
+  ansible.builtin.systemd_service:
+    name: inadyn
+    daemon_reload: true
+    enabled: true
+    state: restarted
+  listen: restart inadyn

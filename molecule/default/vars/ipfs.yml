@@ -1,0 +1,4 @@
+test_role: depin.libs.ipfs
+
+# override role variables
+ipfs_datastore_storage_max: 30000GB

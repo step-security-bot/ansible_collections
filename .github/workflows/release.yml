@@ -26,10 +26,11 @@ jobs:
                         jq --raw-input --slurp --compact-output 'split("\n")[:-1]'
                     )" >> ${GITHUB_OUTPUT}
 
-    release-collections:
+    sign-and-build:
         needs: setup
         runs-on: ubuntu-latest
         strategy:
+          max-parallel: 1
           matrix:
             dir: ${{ fromJson(needs.setup.outputs.collections) }}
         env:
@@ -38,6 +39,10 @@ jobs:
             -
                 name: Checkout
                 uses: actions/checkout@v4
+            -
+                name: Create artifacts directory
+                run: |
+                  mkdir artifacts
             -
                 name: Import GPG key
                 uses: crazy-max/ghaction-import-gpg@v6
@@ -62,11 +67,45 @@ jobs:
                     ansible-sign project gpg-sign .
             - 
                 name: Build collection
+                working-directory: ${{ matrix.dir }}
                 run: |
-                    ansible-galaxy collection build --output-path='./artifacts'
-            - 
+                    ansible-galaxy collection build --output-path='${GITHUB_WORKSPACE}/artifacts'
+            -
+                name: Get collection name
+                id: collection
+                run: |
+                    echo "name=$(echo ${{ matrix.dir }} | tr / . | sed -E 's/\.\.+//g')" >> $GITHUB_OUTPUT
+            -
+                name: Retrieve requirements.yml
+                uses: actions/download-artifact@v4
+                continue-on-error: true
+                with:
+                    name: requirements-yml
+            -
+                name: Get collection tarball
+                run: |
+                    NAME=$(basename $(find ./artifacts -name '*.tar.gz')) yq -i '([{"name": strenv(NAME)}] + .collections | unique_by(.name)) as $uniq | .collections = $uniq' requirements.yml
+            -
+                name: Upload requirements
+                uses: actions/upload-artifact@v4
+                with:
+                    name: requirements-yml
+                    path: ./requirements.yml
+                    overwrite: true
+            -
                 name: Upload artifact
                 uses: actions/upload-artifact@v4
                 with:
-                    name: ansible-collections
+                    name: ${{ steps.collection.outputs.name }}
                     path: ./artifacts/
+    merge:
+        runs-on: ubuntu-latest
+        if: ${{ always() }}
+        needs: sign-and-build
+        steps:
+            - 
+                name: Merge Artifacts
+                uses: actions/upload-artifact/merge@v4
+                with:
+                    name: ansible-collections
+                    delete-merged: true

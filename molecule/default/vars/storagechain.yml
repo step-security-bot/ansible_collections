@@ -1,0 +1,9 @@
+test_role: depin.services.storagechain
+
+# override role variables
+storagechain_node_name: nn-test-20tb
+storagechain_node_id: 66a7eccdc5e29b97a6b41d09
+storagechain_email: anthony@nerdnode.io
+storagechain_password: U2FsdGVkX1+q/LcwM0AbozAr2rPlonirGTtntUb6+Ziq8uziEIlXGous2wmlS55JAVLbENSOp92etQ07Ad/yB91UGgBRHZsrNJ4yh8qkfzU=
+storagechain_node_size: 20000GB
+storagechain_dns: tntnebbt2t.sc.nerdnode.io

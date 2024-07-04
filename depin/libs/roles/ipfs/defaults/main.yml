@@ -1,101 +1,67 @@
 ---
 ipfs_version: v0.29.0
 ipfs_download_url:
-  "https://dist.ipfs.tech/kubo/{{ ipfs_version }}\
+  "https://github.com/ipfs/kubo/releases/download/{{ ipfs_version }}\
   /kubo_{{ ipfs_version }}_{{ ansible_system | lower }}-{{ system_architecture }}.tar.gz"
+
+ipfs_home_dir: /home/ipfs
 
 # systemd
 ipfs_private_network: false
 ipfs_fd_max: 1000000
 ipfs_enable_gc: false
-ipfs_use_defaults: false
-## dummy identity that'll be instantly rotated after init
-ipfs_identity:
-  PeerID: 12D3KooWCixTABwjSsxLxiz1Wm8gaVWYuUpfZvGZoNUXGjtoP5sr
-  PrivKey: CAESQDBW7drToQeuXYTw8qV9P1Rr6z70L9Opv74UCMpPiIDfKzBXAIYPx07Et3W+wPJRoUuE/3O2/G9X6IjWjM/fy0U=
 
-ipfs_datastore:
-  StorageMax: 10GB
-  StorageGCWatermark: 90
-  BloomFilterSize: 1048576 # 1MB
-  GCPeriod: 1h
-  HashOnRead: false
-
+ipfs_datastore_storage_max: 10GB
+ipfs_datastore_storage_gc_watermark: 90
+ipfs_datastore_bloom_filter_size: 1048576 # 1MB
+ipfs_datastore_gc_period: 1h
+ipfs_datastore_hash_on_read: false
+ipfs_datastore_flatfs_shard_func: |-
+  /repo/flatfs/shard/v1/next-to-last/{{ ((ipfs_datastore_storage_max | human_to_bytes) >= ('2TB' | human_to_bytes)) | ternary(3, 2) }}
+ipfs_datastore_flatfs_sync: false
 ipfs_datastore_spec:
-  shardFunc: "{{ ((ipfs_datastore.StorageMax | human_to_bytes) >= ('2TB' | human_to_bytes)) | ternary(3, 2) }}"
-  sync: false
+  mounts:
+    - child:
+        path: blocks
+        shardFunc: "{{ ipfs_datastore_flatfs_shard_func }}"
+        sync: "{{ ipfs_datastore_flatfs_sync }}"
+        type: flatfs
+      mountpoint: /blocks
+      prefix: flatfs.datastore
+      type: measure
+    - child:
+        compression: none
+        path: datastore
+        type: levelds
+      mountpoint: /
+      prefix: leveldb.datastore
+      type: measure
+  type: mount
 
-ipfs_addresses:
-  API: /ip4/127.0.0.1/tcp/5001
-  Announce: []
-  Gateway: /ip4/127.0.0.1/tcp/8080
-  NoAnnounce: []
-  Swarm:
-    - /ip4/0.0.0.0/tcp/4001
-    - /ip6/::/tcp/4001
-    - /ip4/0.0.0.0/udp/4001/quic-v1
-    - /ip4/0.0.0.0/udp/4001/quic-v1/webtransport
-    - /ip6/::/udp/4001/quic-v1
-    - /ip6/::/udp/4001/quic-v1/webtransport
+ipfs_addresses_api: /ip4/127.0.0.1/tcp/5001
+ipfs_addresses_announce: []
+ipfs_addresses_gateway: /ip4/127.0.0.1/tcp/8080
+ipfs_addresses_no_announce: []
 
-ipfs_discovery_mdns:
-  Enabled: false
-  Interval: 10
+ipfs_discovery_mdns_enabled: false
+ipfs_discovery_mdns_interval: 10
 
-ipfs_routing:
-  AcceleratedDHTClient: true
-  Routers: null
-  Methods: null
+ipfs_routing_type: "{{ ipfs_private_network | ternary('dht', 'auto') }}"
+ipfs_routing_accelerated_dht_client: true
 
 ipfs_bootstrap: []
+ipfs_api_http_headers: {}
 
-ipfs_gateway:
-  RootRedirect: null
-  PublicGateways: null
-  PathPrefixes: []
-  APICommands: []
-  NoFetch: false
-  NoDNSLink: false
-  DeserializedResponses: null
+ipfs_swarm_conn_mgr_high_water: 200
+ipfs_swarm_conn_mgr_low_water: "{{ ipfs_swarm_conn_mgr_high_water / 4 }}"
+ipfs_swarm_conn_mgr_grace_period: 30s
+ipfs_swarm_conn_mgr_type: basic
+ipfs_swarm_resource_mgr_max_memory: "{{ (ansible_memtotal_mb | human_to_bytes(default_unit='M') / 2) | int }}"
 
-ipfs_api:
-  HTTPHeaders: null
+ipfs_reprovider_interval: 12h
+ipfs_reprovider_strategy: all
 
-ipfs_swarm:
-  AddrFilters: []
-  DisableBandwidthMetrics: false
-  DisableNatPortMap: true
-  RelayClient: {}
-  RelayService: {}
-  Transports:
-    Network: {}
-    Security: {}
-    Multiplexers: {}
-  ConnMgr:
-    Type: basic
-    HighWater: &swarm_conn_mgr_highwater 200
-    LowWater: "{{ (('*swarm_conn_mgr_highwater' | int) / 4) | int }}"
-    GracePeriod: 30s
-  ResourceMgr:
-    MaxMemory: "{{ (ansible_memtotal_mb | human_to_bytes(default_unit='M') / 2) | int }}"
-
-ipfs_reprovider:
-  Interval: all
-  Strategy: 12h
-
-ipfs_experimental:
-  FilestoreEnabled: false
-  UrlstoreEnabled: false
-  GraphsyncEnabled: false
-  Libp2pStreamMounting: false
-  P2pHttpProxy: false
-  StrategicProviding: false
-  OptimisticProvide: false
-  OptimisticProvideJobsPoolSize: 0
-
-ipfs_internal:
-  Bitswap:
-    EngineBlockstoreWorkerCount: 128
-    EngineTaskWorkerCount: 8
-    MaxOutstandingBytesPerPeer: 1MB
-    TaskWorkerCount: 8
+ipfs_internal_bitswap_engine_blockstore_worker_count: 128
+ipfs_internal_bitswap_engine_task_worker_count: 8
+ipfs_internal_bitswap_max_outstanding_bytes_per_peer: 1MB
+ipfs_internal_bitswap_task_worker_count: 8

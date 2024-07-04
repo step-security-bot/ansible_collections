@@ -1,93 +1,53 @@
 {
-  "Identity": {{ ipfs_identity | to_nice_json }},
-  "Datastore": {
-    {% for dict_item in ipfs_datastore %}
-      dict_item
-    {% endfor %}
-    "Spec": {
-      "mounts": [
-        {
-          "child": {
-            "path": "blocks",
-            "shardFunc": "/repo/flatfs/shard/v1/next-to-last/{{ ipfs_datastore_spec.shardFunc }}",
-            "sync": {{ ipfs_datastore_spec.sync | to_json }},
-            "type": "flatfs"
-          },
-          "mountpoint": "/blocks",
-          "prefix": "flatfs.datastore",
-          "type": "measure"
-        },
-        {
-          "child": {
-            "compression": "none",
-            "path": "datastore",
-            "type": "levelds"
-          },
-          "mountpoint": "/",
-          "prefix": "leveldb.datastore",
-          "type": "measure"
-        }
-      ],
-      "type": "mount"
-    }
-  },
-  "Addresses": {{ ipfs_addresses | to_nice_json }},
-  "Mounts": {
-    "IPFS": "/ipfs",
-    "IPNS": "/ipns",
-    "FuseAllowOther": false
-  },
-  "Discovery": {
-    "MDNS": {{ ipfs_discovery_mdns | to_nice_json }}
-  },
-  "Routing": {{ ipfs_routing | to_nice_json }},
-  "Ipns": {
-    "RepublishPeriod": "",
-    "RecordLifetime": "",
-    "ResolveCacheSize": 128
-  },
-  "Bootstrap": {{ ipfs_bootstrap | to_nice_json(indent=2) | indent(4) }},
-  "Gateway": {
-    "HTTPHeaders": {
-      "Access-Control-Allow-Headers": [
-        "X-Requested-With",
-        "Range",
-        "User-Agent"
-      ],
-      "Access-Control-Allow-Methods": [ "GET" ],
-      "Access-Control-Allow-Origin": [ "*" ]
+    "Datastore": {
+        "StorageMax": {{ ipfs_datastore_storage_max | to_json }},
+        "StorageGCWatermark": {{ ipfs_datastore_storage_gc_watermark | to_json }},
+        "BloomFilterSize": {{ ipfs_datastore_bloom_filter_size | to_json }},
+        "GCPeriod": {{ ipfs_datastore_gc_period | to_json }},
+        "HashOnRead": {{ ipfs_datastore_hash_on_read | to_json }},
+        "Spec": {{ ipfs_datastore_spec | to_json }}
     },
-    {% for dict_item in ipfs_gateway %}
-      dict_item
-    {% endfor %}
-  },
-  "API": {{ ipfs_api | to_nice_json }},
-  "Swarm": {{ ipfs_swarm | to_nice_json }},
-  "AutoNAT": {},
-  "Pubsub": {
-    "DisableSigning": false,
-    "Router": ""
-  },
-  "Peering": {
-    "Peers": null
-  },
-  "DNS": {
-    "Resolvers": {}
-  },
-  "Migration": {
-    "DownloadSources": [],
-    "Keep": ""
-  },
-  "Provider": {
-    "Strategy": ""
-  },
-  "Reprovider": {{ ipfs_reprovider | to_nice_json }},
-  "Experimental": {{ ipfs_experimental | to_nice_json }},
-  "Plugins": {
-    "Plugins": null
-  },
-  "Pinning": {
-    "RemoteServices": {}
-  },
-  "Internal": {{ ipfs_internal | to_nice_json }}
+    "Addresses": {
+        "API": {{ ipfs_addresses_api | to_json }},
+        "Announce": {{ ipfs_addresses_announce | to_json }},
+        "Gateway": {{ ipfs_addresses_gateway | to_json }},
+        "NoAnnounce": {{ ipfs_addresses_no_announce | to_json }}
+    },
+    "Discovery": {
+        "MDNS": {
+            "Enabled": {{ ipfs_discovery_mdns_enabled | to_json }},
+            "Interval": {{ ipfs_discovery_mdns_interval | to_json }}
+        }
+    },
+    "Routing": {
+        "Type": {{ ipfs_routing_type | to_json }},
+        "AcceleratedDHTClient": {{ ipfs_routing_accelerated_dht_client | to_json }}
+    },
+    "Bootstrap": {{ ipfs_bootstrap | to_nice_json }},
+    "API": {
+        "HTTPHeaders": {{ ipfs_api_http_headers | to_nice_json }}
+    },
+    "Swarm": {
+        "ConnMgr": {
+            "Type": {{ ipfs_swarm_conn_mgr_type | to_json }},
+            "HighWater": {{ ipfs_swarm_conn_mgr_high_water | to_json }},
+            "LowWater": {{ ipfs_swarm_conn_mgr_low_water | int }},
+            "GracePeriod": {{ ipfs_swarm_conn_mgr_grace_period | to_json}}
+        },
+        "ResourceMgr": {
+            "MaxMemory": {{ ipfs_swarm_resource_mgr_max_memory | to_json }}
+        }
+    },
+    "Reprovider": {
+        "Interval": {{ ipfs_reprovider_interval | to_json }},
+        "Strategy": {{ ipfs_reprovider_strategy | to_json }}
+    },
+    "Internal": {
+        "Bitswap": {
+            "EngineBlockstoreWorkerCount": {{ ipfs_internal_bitswap_engine_blockstore_worker_count | to_json }},
+            "EngineTaskWorkerCount": {{ ipfs_internal_bitswap_engine_task_worker_count | to_json }},
+            "MaxOutstandingBytesPerPeer": {{ (ipfs_internal_bitswap_max_outstanding_bytes_per_peer | human_to_bytes) | to_json }},
+            "TaskWorkerCount": {{ ipfs_internal_bitswap_task_worker_count | to_json }}
+        }
+    }
 }

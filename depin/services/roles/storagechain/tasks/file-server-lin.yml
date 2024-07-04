@@ -1,0 +1,49 @@
+---
+- name: File Server - create program folder
+  become: true
+  ansible.builtin.file:
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+    dest: /opt/{{ role_name }}
+
+- name: File Server - find binary
+  become: true
+  ansible.builtin.find:
+    paths: /tmp
+    patterns: 'file-server-lin$'
+    use_regex: true
+    get_checksum: true
+    recurse: true
+  register: _download
+
+- name: File Server - extract binary
+  become: true
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ (_download['files'] | first)['path'] }}"
+    dest: /opt/{{ role_name }}
+    mode: preserve
+
+- name: File Server - symlink binary to path
+  become: true
+  ansible.builtin.file:
+    src: /opt/{{ role_name }}/file-server-lin
+    path: /usr/local/bin/file-server-lin
+    mode: '0755'
+    owner: root
+    group: root
+    state: hard
+    force: true
+  notify: restart file-server-lin
+
+- name: File Server - install systemd service
+  become: true
+  ansible.builtin.template:
+    src: templates/file-server-lin.service.j2
+    dest: /etc/systemd/system/file-server-lin.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart file-server-lin

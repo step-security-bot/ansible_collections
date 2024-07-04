@@ -1,0 +1,98 @@
+---
+- name: Run preflight
+  ansible.builtin.include_tasks: preflight.yml
+
+- name: Download files
+  become: true
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ storagechain_download_url }}"
+    dest: /tmp
+
+- name: Install IPFS
+  vars:
+    ipfs_private_network: true
+    ipfs_version: storagechain
+    ipfs_checksum: 47af81af0c1c0aeb26e879cf3b5e548ae9a9ff56
+    ipfs_addresses_api: /ip4/0.0.0.0/tcp/5001
+    ipfs_addresses_gateway: /ip4/0.0.0.0/tcp/8080
+    ipfs_datastore_storage_max: "{{ storagechain_node_size }}"
+    ipfs_api_http_headers:
+        Access-Control-Allow-Origin: ["*"]
+        Access-Control-Allow-Methods: ["PUT", "POST"]
+  ansible.builtin.include_role:
+    name: depin.libs.ipfs
+
+- name: Install IPFS Cluster Follow
+  vars:
+    ipfs_cluster_follow_version: storagechain
+    ipfs_cluster_follow_checksum: 144ae74c02d86be5c13c38c6da4358f4769de842
+    ipfs_cluster_follow_config_url: http://89.117.72.26:8080/ipns/k51qzi5uqu5dlh2h4gml3k5vik5mas2zos0pyf1shnfzj9d4nsg31lw4x7ujsk
+    ipfs_cluster_follow_cluster_name: cluster_follower
+    ipfs_cluster_follow_command_args: "{{ storagechain_ipfs_cluster_args }}"
+    ipfs_cluster_follow_cluster_peername: "{{ storagechain_node_name }}"
+    ipfs_cluster_follow_cluster_monitor_ping_interval: 5s
+    ipfs_cluster_follow_ipfs_connector_ipfshttp_node_multiaddress: /ip4/0.0.0.0/tcp/5001
+    ipfs_cluster_follow_api_restapi_http_listen_multiaddress: /ip4/0.0.0.0/tcp/9094
+    ipfs_cluster_follow_env_vars:
+      CLUSTER_MONITORINGINTERVAL: 5s
+      CLUSTER_HOST_NAME: cluster-internal.io
+      CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9094
+  ansible.builtin.include_role:
+    name: depin.libs.ipfs_cluster_follow
+
+- name: Install File Server
+  ansible.builtin.include_tasks: file-server-lin.yml
+
+- name: Forward IP Address to Storagechain
+  vars:
+    host_ipv4_address: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses | first) }}"
+  ansible.builtin.uri:
+    url: 'https://api.storagechain.io/api/node/nerd-node/add-ipaddress'
+    method: POST
+    body:
+      nodeId: "{{ storagechain_node_id }}"
+      email: "{{ storagechain_email }}"
+      password: "{{ storagechain_password }}"
+      ipAddress: "{{ host_ipv4_address }}"
+    body_format: json
+    headers:
+      Accept: application/json; indent=4
+      Content-Type: application/json
+    status_code:
+      - 200
+  register: send_ipv4_address
+  retries: 5
+  delay: 5
+  until: send_ipv4_address is not failed
+
+- name: Enable DDNS
+  vars:
+    inadyn_hostname: "{{ storagechain_dns }}"
+  ansible.builtin.include_role:
+    name: depin.libs.inadyn
+
+# @todo - update to using netbox source of truth
+- name: Security | allow SSH access
+  community.general.ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+
+- name: Set firwall rules
+  community.general.ufw:
+    rule: allow
+    port: "{{ _storagechain_port }}"
+    proto: tcp
+  loop:
+    - 3008
+    - 4001
+    - 5001
+    - 8080
+    - 9094:9096
+  loop_control:
+    loop_var: _storagechain_port
+
+- name: Enable firewall
+  community.general.ufw:
+    state: enabled

@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: molecule
+  gather_facts: true
+  tasks:
+    - name: Testing {{ test_role | default('role') }}
+      ansible.builtin.include_role:
+        name: "{{ test_role | default('depin.utils.test') }}" 

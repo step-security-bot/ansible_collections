@@ -1,3 +1,4 @@
+#jinja2: trim_blocks:False
 [Unit]
 Description=IPFS daemon
 After=network.target
@@ -6,17 +7,24 @@ After=network.target
 Type=notify
 User=ipfs
 Group=ipfs
+
 StateDirectory=ipfs
 TimeoutStartSec=10800
 LimitNOFILE={{ ipfs_fd_max }}
 MemorySwapMax=0
-{% if ipfs_private_network %}
+
+Environment="IPFS_LOGGING=info"
+Environment="IPFS_FD_MAX={{ ipfs_fd_max }}"
+{% if ipfs_private_network is defined and ipfs_private_network %}
 Environment="LIBP2P_FORCE_PNET=1"
 {% endif %}
-Environment="IPFS_LOGGING=info"
-Environment="IPFS_FD_MAX={{ ipfs_fd_max}}"
-ExecStart=/usr/local/bin/ipfs daemon --migrate {%- if ipfs_enable_gc %} --enable-gc{% endif %}
+{% if ipfs_env_vars is defined %}
+{% for env in ipfs_env_vars %}
+Environment="{{ env }}={{ ipfs_env_vars[env] }}"
+{% endfor -%}
+{% endif -%}
 
+ExecStart=/usr/local/bin/ipfs daemon {% if ipfs_enable_gc %} --enable-gc {% endif %}
 Restart=on-failure
 KillSignal=SIGINT
 

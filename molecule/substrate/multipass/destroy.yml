@@ -1,0 +1,15 @@
+---
+- name: Create
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Delete and purge a VM
+      theko2fi.multipass.multipass_vm:
+        name: molecule-dev-vm
+        state: absent
+        purge: true
+
+    - name: Remove dynamic inventory file
+      ansible.builtin.file:
+        path: ../../inventory/molecule_inventory.yml
+        state: absent
