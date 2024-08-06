@@ -1,2 +1,5 @@
 ## don't commit local inventories
 **/shared-tests/inventory/*
+.DS_Store
+*.tar.gz
+.ansible-sign

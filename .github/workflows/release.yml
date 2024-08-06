@@ -1,0 +1,72 @@
+name: release
+
+on:
+  workflow_dispatch:
+
+# on:
+#   release:
+#     types:
+#       - published
+
+jobs:
+    setup:
+        runs-on: ubuntu-latest
+        outputs:
+            collections: ${{ steps.directories.outputs.dirs }}
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v4
+            -
+                id: directories
+                run: |
+                    echo "dirs=$(
+                        find . -type f -name '*galaxy.yml' |
+                        sed -r 's|/[^/]+$||' |
+                        jq --raw-input --slurp --compact-output 'split("\n")[:-1]'
+                    )" >> ${GITHUB_OUTPUT}
+
+    release-collections:
+        needs: setup
+        runs-on: ubuntu-latest
+        strategy:
+          matrix:
+            dir: ${{ fromJson(needs.setup.outputs.collections) }}
+        env:
+            ANSIBLE_SIGN_GPG_PASSPHRASE: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
+        steps:
+            -
+                name: Checkout
+                uses: actions/checkout@v4
+            -
+                name: Import GPG key
+                uses: crazy-max/ghaction-import-gpg@v6
+                id: gpg-signing-key
+                with:
+                    gpg_private_key: ${{ secrets.GPG_SIGNING_KEY }}
+                    passphrase: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
+            -
+                name: Export GPG public key
+                run: |
+                    gpg --armor --export --output='./artifacts/pubkey.gpg' ${{ steps.gpg-signing-key.outputs.name }}
+            -
+                name: Install ansible-sign
+                run: pipx install ansible-sign==0.1.1
+            -
+                name: Install ansible-core
+                run: pipx install ansible-core==2.17.1
+            -
+                name: Sign collection
+                working-directory: ${{ matrix.dir }}
+                run: |
+                    ansible-sign project gpg-sign .
+            - 
+                name: Build collection
+                run: |
+                    ansible-galaxy collection build --output-path='./artifacts'
+            - 
+                name: Upload artifact
+                uses: actions/upload-artifact@v4
+                with:
+                    name: ansible-collections
+                    path: ./artifacts/
