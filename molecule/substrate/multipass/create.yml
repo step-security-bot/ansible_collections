@@ -12,12 +12,15 @@
         _vm: "{{ molecule_yml['platforms'] | first }}"
       theko2fi.multipass.multipass_vm:
         name: "{{ _vm['name'] }}"
-        cpus: 4
+        cpus: 2
         memory: 2G
-        disk: 10G
         cloud_init: ../cloud-init.yml
-        image: "{{ _vm['image'] }}"
-        recreate: false
+        image: |
+          {{
+            ('ubuntu' in _vm['image']) |
+            ternary(_vm['image'] | split(':') | last, _vm['image'])
+          }}
+        recreate: true
         state: started
       register: multipass_vm
 

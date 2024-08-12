@@ -18,8 +18,8 @@
     ipfs_addresses_gateway: /ip4/0.0.0.0/tcp/8080
     ipfs_datastore_storage_max: "{{ storagechain_node_size }}"
     ipfs_api_http_headers:
-        Access-Control-Allow-Origin: ["*"]
-        Access-Control-Allow-Methods: ["PUT", "POST"]
+      Access-Control-Allow-Origin: ["*"]
+      Access-Control-Allow-Methods: ["PUT", "POST"]
   ansible.builtin.include_role:
     name: depin.libs.ipfs
 
@@ -47,6 +47,7 @@
 - name: Forward IP Address to Storagechain
   vars:
     host_ipv4_address: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses | first) }}"
+  when: "'molecule' not in groups"
   ansible.builtin.uri:
     url: 'https://api.storagechain.io/api/node/nerd-node/add-ipaddress'
     method: POST
@@ -73,26 +74,29 @@
     name: depin.libs.inadyn
 
 # @todo - update to using netbox source of truth
-- name: Security | allow SSH access
-  community.general.ufw:
-    rule: allow
-    port: ssh
-    proto: tcp
+- name: Setup firewall
+  become: true
+  block:
+    - name: Allow SSH access
+      community.general.ufw:
+        rule: allow
+        port: ssh
+        proto: tcp
 
-- name: Set firwall rules
-  community.general.ufw:
-    rule: allow
-    port: "{{ _storagechain_port }}"
-    proto: tcp
-  loop:
-    - 3008
-    - 4001
-    - 5001
-    - 8080
-    - 9094:9096
-  loop_control:
-    loop_var: _storagechain_port
+    - name: Set firwall rules
+      community.general.ufw:
+        rule: allow
+        port: "{{ _storagechain_port }}"
+        proto: tcp
+      loop:
+        - 3008
+        - 4001
+        - 5001
+        - 8080
+        - 9094:9096
+      loop_control:
+        loop_var: _storagechain_port
 
-- name: Enable firewall
-  community.general.ufw:
-    state: enabled
+    - name: Enable firewall
+      community.general.ufw:
+        state: enabled

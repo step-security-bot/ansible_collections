@@ -5,4 +5,4 @@
   tasks:
     - name: Testing {{ test_role | default('role') }}
       ansible.builtin.include_role:
-        name: "{{ test_role | default('depin.utils.test') }}" 
+        name: "{{ test_role | default('depin.utils.test') }}"

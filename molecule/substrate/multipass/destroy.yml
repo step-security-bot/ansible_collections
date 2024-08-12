@@ -4,8 +4,10 @@
   gather_facts: false
   tasks:
     - name: Delete and purge a VM
+      vars:
+        _vm: "{{ molecule_yml['platforms'] | first }}"
       theko2fi.multipass.multipass_vm:
-        name: molecule-dev-vm
+        name: "{{ _vm['name'] }}"
         state: absent
         purge: true
 

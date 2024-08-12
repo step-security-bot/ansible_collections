@@ -6,6 +6,7 @@ packages:
   - jq
   - unzip
   - pipx
+  - ufw
 package_upgrade: true
 package_update: true
 
