@@ -1,0 +1,12 @@
+[Unit]
+Description=
+After=network-online.target
+Wants=network.target
+
+[Service]
+Type=simple
+ExecStart=
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

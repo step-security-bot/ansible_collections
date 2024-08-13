@@ -17,7 +17,7 @@
         name:
           - sops
           - gnupg
-        state: latest
+        state: present
         update_homebrew: true
 
     # - name: Install collections
