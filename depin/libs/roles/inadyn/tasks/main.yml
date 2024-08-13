@@ -7,7 +7,6 @@
   ansible.builtin.apt:
     name: inadyn
     update_cache: true
-    state: latest
 
 - name: Update inadyn.conf for Cloudflare
   become: true
@@ -23,4 +22,5 @@
           proxied  = false
       }
     create: true
+    mode: '0644'
   notify: restart inadyn

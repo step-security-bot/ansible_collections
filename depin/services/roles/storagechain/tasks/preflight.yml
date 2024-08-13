@@ -1,7 +1,7 @@
 ---
 - name: Get pidof resize2fs
   community.general.pids:
-      name: resize2fs
+    name: resize2fs
   register: _resize2fs
 
 - name: Wait for resize2fs

@@ -1,4 +1,6 @@
 collections:
+  - name: theko2fi.multipass
+    version: 0.3.0
   - name: community.sops
     version: 1.8.1
   - name: community.general
