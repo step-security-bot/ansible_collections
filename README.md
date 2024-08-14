@@ -78,3 +78,9 @@ OR
 ```bash
   git update-index --no-skip-worktree molecule/default/molecule.yml
 ```
+
+once changed update git index for file again
+
+```bash
+  git update-index --skip-worktree molecule/default/molecule.yml
+```
