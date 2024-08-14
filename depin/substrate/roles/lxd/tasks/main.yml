@@ -1,0 +1,102 @@
+---
+- name: Deploy VM on LXD
+  connection: local
+  become: true
+  vars:
+    _hostname: "{{ lxd_vm_hostname | split('.') | first }}"
+    _ipv4_public_address: "{{ lxd_vm_ipv4_address | ansible.utils.ipaddr('public') }}"
+    _vcpus: "{{ hostvars[inventory_hostname].vcpus }}"
+    _memory: "{{ hostvars[inventory_hostname].memory }}"
+    _disk: "{{ hostvars[inventory_hostname].disk | int }}GiB"
+  block:
+    - name: Update default profile
+      community.general.lxd_profile:
+        merge_profile: true
+        name: default
+        config:
+          user.location: "{{ lxd_hostname }}"
+          user.netdata_api_key: "{{ lxd_hostname | ansible.builtin.to_uuid }}"
+        state: present
+
+    - name: Create VM profile
+      when: _ipv4_public_address | length | bool
+      community.general.lxd_profile:
+        name: "{{ _hostname }}"
+        config:
+          user.location: "{{ lxd_hostname }}"
+          user.netdata_api_key: "{{ lxd_hostname | ansible.builtin.to_uuid }}"
+          cloud-init.network-config: |
+            network:
+              version: 2
+              ethernets:
+                enp5s0:
+                  routes:
+                  - to: default
+                    via: 169.254.0.1
+                    on-link: true
+                  addresses:
+                  - "{{ _ipv4_public_address | first }}/32"
+                  nameservers:
+                    addresses:
+                    - 8.8.8.8
+                    - 1.1.1.1
+                    search: []
+        description: Routed LXD profile
+        devices:
+          eth0:
+            ipv4.address: "{{ _ipv4_public_address | first }}"
+            nictype: routed
+            parent: "{{ ansible_default_ipv4.interface }}"
+            type: nic
+          root:
+            path: /
+            pool: default
+            type: disk
+        state: present
+
+    - name: Clean install VM
+      when: lxd_reinstall
+      delegate_to: localhost
+      community.general.lxd_container:
+        name: "{{ lxd_vm_hostname | split('.') | first }}"
+        state: absent
+
+    - name: Create VM
+      delegate_to: localhost
+      community.general.lxd_container:
+        name: "{{ _hostname }}"
+        ignore_volatile_options: true
+        type: virtual-machine
+        state: started
+        source:
+          protocol: simplestreams
+          type: image
+          mode: pull
+          alias: "{{ lxd_vm_image }}"
+          server: https://cloud-images.ubuntu.com/releases
+        config:
+          limits.cpu: "{{ _vcpus | int }}"
+          limits.memory: "{{ (_memory | int >= 1024) | ternary(_memory | int, '1024') }}MiB"
+          cloud-init.user-data: "{{ lookup('ansible.builtin.template', 'templates/user-data.yml.j2') }}"
+        devices:
+          root:
+            path: /
+            pool: default
+            type: disk
+            size: "{{ _disk }}"
+        profiles:
+          - "{{ (vm_ipv4_public_address is defined) | ternary(_hostname, 'default') }}"
+        wait_for_ipv4_addresses: true
+        wait_for_container: true
+        timeout: 300
+      register: deploy_vm
+
+    - name: Re-run cloud-init on instance
+      when:
+        - deploy_vm is defined
+        - not deploy_vm.changed
+      vars:
+        ansible_connection: lxd
+        ansible_lxd_host: "{{ _hostname }}"
+      ansible.builtin.command: cloud-init clean --logs --reboot
+      changed_when: false

@@ -1,0 +1,4 @@
+---
+lxd_hostname: "{{ lookup('ansible.builtin.pipe', 'hostname -s') }}"
+lxd_vm_hostname: vm-{{ vm_id }}.box.nerd-node.com
+lxd_vm_image: "22.04"

@@ -1,0 +1,43 @@
+#cloud-config
+fqdn: {{ lxd_vm_hostname }}
+manage_etc_hosts: localhost
+prefer_fqdn_over_hostname: true
+
+packages:
+  - pipx
+  - git
+  - acl
+  - nano
+  - curl
+  - jq
+  - ufw
+package_update: true
+package_upgrade: true
+
+ssh_pwauth: false
+disable_root: true
+
+users:
+  -
+    name: nerdnode
+    gecos: NerdNode Admin Account
+    groups: users,admin,wheel
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOEu3Yh+xr+oNfcj72bcqcZNhg3D1SzeHh+BQKX4/05V anthony@nerdnode.io
+        - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTyKXtxmDtCrOFLeB6iGu/RXb1XxVZU9deTn+PeOrzq5rik+WUHBZh7fisJB1rlbDI/lHRHOjwRthn8hrUHeCj/aY5X0DBjp04mRfLQEuCJboPi2BRRXPpuRFnijSlxbXAPfor/GdfzHlXHssR50hi7RRMdpNNu15+o2erdngsW7PvEZRY6Mk+h/hXoYDKv9wBo9asg4l0BryhbJZ5VCJUFDmsDimqK1AnXn3r9M8GQXp32jzEs/wWAxGppq2Yn9qtvhrFs3of8qZL78ZteKICzKEhx3VPnzn41HJlcC9X7YsSZtBpzuTrOnbyxcqBLFYxiKo8X6Vfk32RPwQSuiHj
+
+write_files:
+  -
+    path: /etc/environment
+    append: true
+    content: |
+        export PIPX_HOME=/opt/pipx
+        export PIPX_BIN_DIR=/usr/local/bin
+
+runcmd:
+  - [ pipx, install, ansible-core ]
+  - [ pipx, inject, ansible-core, psutil ]
+  - [ pipx, ensurepath ]
