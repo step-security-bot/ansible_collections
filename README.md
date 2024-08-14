@@ -34,33 +34,47 @@ pipx install --include-deps molecule
 
 1. install [multipass](https://multipass.run/install)
 
-2. update the playbooks under provisioner in `molecule/default/molecule.yml`
-
-```yaml
-...
-provisioner:
-  name: ansible
-  playbooks:
-    create: ../substrate/multipass/create.yml
-    destroy: ../substrate/multipass/destroy.yml
-    prepare: ../substrate/multipass/prepare.yml
-  inventory:
-    links:
-      hosts: ../inventory/
-```
-
-3. Ensure local changes don't get pushed to remote
-
-```bash
-git update-index --skip-worktree molecule/default/molecule.yml
-```
-
-> If you need to change something in `molecule/defualt/molecule.yml` undo with the below command
-
-```bash
-git update-index --no-skip-worktree molecule/default/molecule.yml
-```
-
-### macos (Apple silicon)
+### macos
 
 1. install [orbstack](https://docs.orbstack.dev/install)
+
+    ```bash
+      brew install orbstack
+    ```
+
+OR
+
+1. install [UTM](https://mac.getutm.app/)
+
+    ```bash
+      brew install --cask utm
+    ```
+
+2. update the playbooks under provisioner in `molecule/default/molecule.yml`
+
+    ```yaml
+    ...
+    provisioner:
+      name: ansible
+      playbooks:
+        create: ../substrate/<name>/create.yml
+        destroy: ../substrate/<name>/destroy.yml
+        prepare: ../substrate/<name>/prepare.yml
+      inventory:
+        links:
+          hosts: ../inventory/
+    ```
+
+3. install required ansible collections
+
+    ```bash
+      ansible-galaxy install -r requirements.yml
+    ```
+
+---
+
+> If you need to change something in `molecule/defualt/molecule.yml` use the following command
+
+```bash
+  git update-index --no-skip-worktree molecule/default/molecule.yml
+```
