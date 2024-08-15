@@ -1,0 +1,21 @@
+---
+- name: Load common variables
+  ansible.builtin.include_vars:
+    file: "main.yml"
+  tags:
+    - docker
+
+- name: Pull an image
+  community.docker.docker_container:
+    name: presearch
+    image: presearch/node
+
+- name: Start a container with a command
+  community.docker.docker_container:
+    name: presearch
+    image: presearch/node
+    restart_policy: unless-stopped
+    volumes:
+      - presearch-node-storage:/app/node
+    env:
+      REGISTRATION_CODE: "{{ presearch_reg_code }}"

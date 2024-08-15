@@ -1,0 +1,5 @@
+---
+# defaults file for skeleton
+var_container_count: 1
+var_presearch_container_name: presearch
+var_presearch_container_image: presearch/node
