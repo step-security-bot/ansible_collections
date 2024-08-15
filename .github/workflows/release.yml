@@ -2,110 +2,129 @@ name: release
 
 on:
   workflow_dispatch:
-
-# on:
-#   release:
-#     types:
-#       - published
+  push:
+    tags:
+    - "v*.*.*"
 
 jobs:
-    setup:
-        runs-on: ubuntu-latest
-        outputs:
-            collections: ${{ steps.directories.outputs.dirs }}
-        steps:
-            -
-                name: Checkout
-                uses: actions/checkout@v4
-            -
-                id: directories
-                run: |
-                    echo "dirs=$(
-                        find . -type f -name '*galaxy.yml' |
-                        sed -r 's|/[^/]+$||' |
-                        jq --raw-input --slurp --compact-output 'split("\n")[:-1]'
-                    )" >> ${GITHUB_OUTPUT}
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      collections: ${{ steps.directories.outputs.dirs }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        id: directories
+        run: |
+          echo "dirs=$(
+            find . -type f -name '*galaxy.yml' |
+            sed -r 's|/[^/]+$||' |
+            jq --raw-input --slurp --compact-output 'split("\n")[:-1]'
+          )" >> ${GITHUB_OUTPUT}
 
-    sign-and-build:
-        needs: setup
-        runs-on: ubuntu-latest
-        strategy:
-          max-parallel: 1
-          matrix:
-            dir: ${{ fromJson(needs.setup.outputs.collections) }}
-        env:
-            ANSIBLE_SIGN_GPG_PASSPHRASE: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
-        steps:
-            -
-                name: Checkout
-                uses: actions/checkout@v4
-            -
-                name: Create artifacts directory
-                run: |
-                  mkdir artifacts
-            -
-                name: Import GPG key
-                uses: crazy-max/ghaction-import-gpg@v6
-                id: gpg-signing-key
-                with:
-                    gpg_private_key: ${{ secrets.GPG_SIGNING_KEY }}
-                    passphrase: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
-            -
-                name: Export GPG public key
-                run: |
-                    gpg --armor --export --output='./artifacts/pubkey.gpg' ${{ steps.gpg-signing-key.outputs.name }}
-            -
-                name: Install ansible-sign
-                run: pipx install ansible-sign==0.1.1
-            -
-                name: Install ansible-core
-                run: pipx install ansible-core==2.17.1
-            -
-                name: Sign collection
-                working-directory: ${{ matrix.dir }}
-                run: |
-                    ansible-sign project gpg-sign .
-            - 
-                name: Build collection
-                working-directory: ${{ matrix.dir }}
-                run: |
-                    ansible-galaxy collection build --output-path='${GITHUB_WORKSPACE}/artifacts'
-            -
-                name: Get collection name
-                id: collection
-                run: |
-                    echo "name=$(echo ${{ matrix.dir }} | tr / . | sed -E 's/\.\.+//g')" >> $GITHUB_OUTPUT
-            -
-                name: Retrieve requirements.yml
-                uses: actions/download-artifact@v4
-                continue-on-error: true
-                with:
-                    name: requirements-yml
-            -
-                name: Get collection tarball
-                run: |
-                    NAME=$(basename $(find ./artifacts -name '*.tar.gz')) yq -i '([{"name": strenv(NAME)}] + .collections | unique_by(.name)) as $uniq | .collections = $uniq' requirements.yml
-            -
-                name: Upload requirements
-                uses: actions/upload-artifact@v4
-                with:
-                    name: requirements-yml
-                    path: ./requirements.yml
-                    overwrite: true
-            -
-                name: Upload artifact
-                uses: actions/upload-artifact@v4
-                with:
-                    name: ${{ steps.collection.outputs.name }}
-                    path: ./artifacts/
-    merge:
-        runs-on: ubuntu-latest
-        if: ${{ always() }}
-        needs: sign-and-build
-        steps:
-            - 
-                name: Merge Artifacts
-                uses: actions/upload-artifact/merge@v4
-                with:
-                    name: ansible-collections
-                    delete-merged: true
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        dir: ${{ fromJson(needs.setup.outputs.collections) }}
+    env:
+      ANSIBLE_SIGN_GPG_PASSPHRASE: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Create artifacts directory
+        run: |
+          mkdir artifacts
+      -
+        name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@v6
+        id: gpg-signing-key
+        with:
+          gpg_private_key: ${{ secrets.GPG_SIGNING_KEY }}
+          passphrase: ${{ secrets.ANSIBLE_SIGN_GPG_PASSPHRASE }}
+      -
+        name: Export GPG public key
+        run: |
+          gpg --armor --export --output='./artifacts/pubkey.gpg' ${{ steps.gpg-signing-key.outputs.name }}
+      -
+        name: Install ansible-sign
+        run: pipx install ansible-sign==0.1.1
+      -
+        name: Install ansible-core
+        run: pipx install ansible-core==2.17.1
+      -
+        name: Sign collection
+        working-directory: ${{ matrix.dir }}
+        run: |
+          ansible-sign project gpg-sign .
+      - 
+        name: Build collection
+        working-directory: ${{ matrix.dir }}
+        run: |
+          ansible-galaxy collection build --output-path='${GITHUB_WORKSPACE}/artifacts'
+      -
+        name: Get collection name
+        id: collection
+        run: |
+          echo "name=$(echo ${{ matrix.dir }} | tr / . | sed -E 's/\.\.+//g')" >> $GITHUB_OUTPUT
+      -
+        name: Retrieve requirements.yml
+        uses: actions/download-artifact@v4
+        if: strategy.job-index != 0
+        continue-on-error: true
+        with:
+          name: requirements-yml
+      -
+        name: Get collection tarball
+        run: |
+          NAME=$(basename $(find ./artifacts -name '*.tar.gz')) yq -i '([{"name": strenv(NAME)}] + .collections | unique_by(.name)) as $uniq | .collections = $uniq' requirements.yml
+      -
+        name: Upload requirements
+        uses: actions/upload-artifact@v4
+        with:
+          name: requirements-yml
+          path: ./requirements.yml
+          overwrite: true
+      -
+        name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.collection.outputs.name }}
+          path: ./artifacts/
+
+  package:
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - 
+        name: Merge Artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: ansible-collections
+          delete-merged: true
+      -
+        name: Retrieve Artifacts
+        uses: actions/download-artifact@v4
+        id: release-artifacts
+        with:
+          name: ansible-collections
+      - 
+        name: Zip artifact for release
+        run: zip ansible-collections.zip ./* -r
+      -
+        name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ansible-collections.zip
+          make_latest: false
+          generate_release_notes: true
