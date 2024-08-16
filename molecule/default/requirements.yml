@@ -1,6 +1,9 @@
+## used to setup collections required for molecule tests
+
 collections:
   - name: theko2fi.multipass
     version: 0.3.0
-  - name: https://github.com/deeep-network/ansible_collections.git/#depin/
-    type: git
-    version: v1.0.0
+  - name: community.sops
+    version: 1.8.1
+  - name: community.general
+    version: 9.3.0

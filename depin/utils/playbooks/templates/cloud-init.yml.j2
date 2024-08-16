@@ -37,4 +37,4 @@ runcmd:
   - [ env, PIPX_HOME=/opt/pipx, PIPX_BIN_DIR=/usr/local/bin, pipx, install, ansible-core, ansible-sign ]
   - [ env, PIPX_HOME=/opt/pipx, PIPX_BIN_DIR=/usr/local/bin, pipx, inject, ansible-core, psutil ]
   - [ env, PIPX_HOME=/opt/pipx, PIPX_BIN_DIR=/usr/local/bin, pipx, ensurepath ]
-  - [ sudo, -iu, nerdnode, ansible-galaxy, collection, install, git+https://github.com/deeep-network/ansible_collections.git/#depin/ ]
+  - [ sudo, -iu, nerdnode, ansible-galaxy, collection, install, git+https://github.com/deeep-network/ansible_collections.git/#depin/,v1.0.0 ]
