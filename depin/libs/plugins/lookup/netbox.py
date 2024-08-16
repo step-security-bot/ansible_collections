@@ -36,6 +36,8 @@ DOCUMENTATION = """
             description:
                 - To set a custom header on all requests. These headers are automatically merged 
                 with headers pynetbox sets itself.
+            env:
+                - name: NETBOX_CUSTOM_HEADERS
             required: false
         plugin:
             description:
