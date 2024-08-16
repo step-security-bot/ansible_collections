@@ -6,45 +6,59 @@
     molecule_inventory:
       molecule:
         hosts: {}
+    molecule_yml:
+      platforms:
+        - name: instance
+          image: ubuntu:20.04
+          user: ansible
   tasks:
-    - name: List Orb VMs
-      ansible.builtin.command: orbctl list -f json
-      changed_when: false
-      register: orb_list
+    - name: List existing VMs
+      community.libvirt.virt:
+        command: list_vms
+        state: running
+      register: libvirt_vms
+
+    - name: Debug libvirt_vms content
+      ansible.builtin.debug:
+        var: libvirt_vms
 
     - name: Verify VM list
       vars:
         _image: "{{ platform['image'] | split(':') }}"
-        _running: "{{ orb_list.stdout | from_json | selectattr('state', 'equalto', 'running') }}"
-        _match: |-
-          {{
-            _running |
-            selectattr('name', 'equalto', platform['name']) |
-            selectattr('image.distro', 'equalto', _image | first) |
-            selectattr('image.version', 'equalto', _image | last) |
-            first
-          }}
+        _running: "{{ libvirt_vms.list_vms | selectattr('name', 'equalto', platform['name']) | list }}"
         _vm:
-          exists: "{{ _match is defined }}"
-          name: "{{ _match['name'] | default(platform['name']) }}"
-          user: "{{ _match['config']['default_username'] | default('ansible') }}"
+          exists: "{{ _running | length > 0 }}"
+          name: "{{ platform['name'] }}"
+          user: "{{ platform['user'] | default('ansible') }}"
           image: "{{ platform['image'] }}"
       ansible.builtin.set_fact:
-        orbstack_vms: "{{ (orbstack_vms | default([])) + [_vm] }}"
+        kvm_vms: "{{ (kvm_vms | default([])) + [_vm] }}"
       loop: "{{ molecule_yml['platforms'] }}"
       loop_control:
         loop_var: platform
+      when: libvirt_vms.list_vms | length > 0
 
-    - name: Create Orb VM
-      when: not _vm['exists']
-      ansible.builtin.command: |
-        orbctl create {{ _vm['image'] }} \
-        --user {{ _vm['user'] }} \
-        --user-data ../cloud-init.yml \
-        -a amd64 \
-        {{ _vm['name'] }}
-      changed_when: false
-      loop: "{{ orbstack_vms }}"
+    - name: Ensure kvm_vms is defined
+      ansible.builtin.set_fact:
+        kvm_vms: "{{ kvm_vms | default([]) }}"
+      when: kvm_vms is not defined
+
+    - name: Create KVM VM
+      when: kvm_vms is defined and kvm_vms | length > 0 and not _vm['exists']
+      community.libvirt.virt:
+        name: "{{ _vm['name'] }}"
+        state: running
+        memory_mb: 2048
+        vcpus: 2
+        disks:
+          - size: 10G
+        networks:
+          - name: default
+        os_type: linux
+        os_variant: ubuntu20.04
+        arch: amd64
+        user_data: "../cloud-init.yml"
+      loop: "{{ kvm_vms }}"
       loop_control:
         loop_var: _vm
 
@@ -53,12 +67,12 @@
         inventory_partial_yaml: |
           molecule:
             hosts:
-              {{ _vm['name'] }}@orb:
+              {{ _vm['name'] }}:
                 ansible_user: {{ _vm['user'] }}
       ansible.builtin.set_fact:
         molecule_inventory: >
           {{ molecule_inventory | combine(inventory_partial_yaml | from_yaml, recursive=true) }}
-      loop: "{{ orbstack_vms }}"
+      loop: "{{ kvm_vms }}"
       loop_control:
         loop_var: _vm
 
@@ -77,7 +91,7 @@
         that: "'molecule' in groups"
         fail_msg: |
           molecule group was not found inside inventory groups: {{ groups }}
-      run_once: true # noqa: run-once[task]
+      run_once: true
 
 - name: Validate that inventory was refreshed
   hosts: molecule

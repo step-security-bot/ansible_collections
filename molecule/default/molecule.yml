@@ -1,19 +1,20 @@
 ---
 driver:
-  name: default
+  name: libvirt
 dependency:
   name: galaxy
   options:
     requirements-file: ../../requirements.yml
 platforms:
   - name: instance
-    image: ubuntu:noble
+    image: ubuntu:20.04
+    user: ansible
 provisioner:
   name: ansible
   playbooks:
-    create: ../substrate/orbstack/create.yml
-    destroy: ../substrate/orbstack/destroy.yml
-    prepare: ../substrate/orbstack/prepare.yml
+    create: ../substrate/kvm/create.yml
+    destroy: ../substrate/kvm/destroy.yml
+    prepare: ../substrate/kvm/prepare.yml
   inventory:
     links:
       hosts: ../inventory/
