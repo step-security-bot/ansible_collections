@@ -1,7 +1,7 @@
 # Create `ansible` user with sudo permissions and membership in `DEPLOY_GROUP`
 # This template gets rendered using `loop: "{{ molecule_yml.platforms }}"`, so
 # each `item` is an element of platforms list from the molecule.yml file for this scenario.
-FROM ubuntu:noble
+FROM ubuntu:noble@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
 
 ENV ANSIBLE_USER=ansible DEPLOY_GROUP=deployer
 ENV SUDO_GROUP=sudo
