@@ -3,8 +3,6 @@ driver:
   name: default
 dependency:
   name: galaxy
-  options:
-    requirements-file: ../../requirements.yml
 platforms:
   - name: instance
     image: ubuntu:noble

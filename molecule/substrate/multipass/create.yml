@@ -7,6 +7,12 @@
       molecule:
         hosts: {}
   tasks:
+    - name: Create cloud-init file
+      ansible.builtin.template:
+        src: ../../../depin/utils/playbooks/templates/cloud-init.yml.j2
+        dest: ../cloud-init.yml
+        mode: '0644'
+
     - name: Create VM (recreate if exists)
       vars:
         _vm: "{{ molecule_yml['platforms'] | first }}"

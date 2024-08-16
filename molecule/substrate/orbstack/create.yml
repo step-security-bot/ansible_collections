@@ -3,6 +3,7 @@
   hosts: localhost
   gather_facts: false
   vars:
+    hostname: molecule.dev.nerd-node.com
     molecule_inventory:
       molecule:
         hosts: {}
@@ -34,6 +35,12 @@
       loop: "{{ molecule_yml['platforms'] }}"
       loop_control:
         loop_var: platform
+
+    - name: Create cloud-init file
+      ansible.builtin.template:
+        src: ../../../depin/utils/playbooks/templates/cloud-init.yml.j2
+        dest: ../cloud-init.yml
+        mode: '0644'
 
     - name: Create Orb VM
       when: not _vm['exists']

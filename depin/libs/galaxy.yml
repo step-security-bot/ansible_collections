@@ -42,6 +42,7 @@ tags: []
 # range specifiers can be set and are separated by ','
 dependencies:
   ansible.utils: "5.1.0"
+  community.sops: "1.8.0"
 
 # The URL of the originating SCM repository
 repository: https://github.com/deeep-network/ansible_collections
